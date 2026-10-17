@@ -9,9 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        obsidian: "#151515", // خلفية الموقع
+        ember: "#242424",    // خلفية الكروت
+        parchment: "#e9ebdf", // لون النصوص
       },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'sans-serif'],
+        display: ['var(--font-space-grotesk)', 'sans-serif'],
+      },
+      boxShadow: {
+        // تأثير الظل عند المرور (ألوان مرادفة للصورة الثالثة - برتقالي/بنفسجي)
+        'glow': '0 0 25px rgba(255, 92, 0, 0.3)',
+        'glow-purple': '0 0 25px rgba(138, 43, 226, 0.3)',
+      }
     },
   },
   plugins: [],

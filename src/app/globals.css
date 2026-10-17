@@ -1,27 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    font-family: 'Cairo', sans-serif;
+    scroll-behavior: smooth;
+  }
+  body {
+    /* تدرج الألوان الأساسي: بنفسجي وزهري غامق جداً */
+    background: linear-gradient(-45deg, #2e1065, #701a75, #4c1d95, #3b0764);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    @apply text-white; /* النص الأساسي أبيض */
+    direction: rtl;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* التصميم الزجاجي الداكن للكروت (الغباش) */
+  .glass-dark {
+    @apply bg-[#1a0b2e]/40 backdrop-blur-xl border border-pink-500/20 shadow-[0_8px_30px_rgb(0,0,0,0.3)] rounded-2xl transition-all duration-300;
+  }
+
+  /* توهج الأزرار والبطاقات باللون الزهري */
+  .hover-glow-dark:hover {
+    box-shadow: 0 10px 40px -10px rgba(236, 72, 153, 0.6);
+    @apply border-pink-500/60 -translate-y-1 bg-[#1a0b2e]/60;
+  }
+
+  /* زر تسجيل الدخول */
+  .btn-glowing {
+    @apply bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:shadow-[0_0_35px_rgba(236,72,153,0.7)] hover:-translate-y-1 transition-all duration-300;
+  }
+
+  /* حركة شريط اللغات */
+  .animate-marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 30s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(50%); } 
   }
 }
