@@ -1,79 +1,608 @@
 'use client';
-import { useState } from 'react';
 
-export default function RemoveBg() {
-  const [image, setImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [fileName, setFileName] = useState('');
+import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/components/LanguageProvider';
+import { useRouter } from 'next/navigation';
+import { UploadCloud, Loader2, Download, History, AlertCircle, Eye, LogIn, Sliders, Image as ImageIcon, Palette, Wand2 } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
 
-  const handleFile = async (file: File) => {
-    if (!file) return;
-    setFileName(file.name);
-    setLoading(true);
-    setError('');
-    setImage(null);
-    
-    try {
-      // استيراد ديناميكي لتجنب مشاكل الـ SSR
-      const { removeBackground } = await import('@imgly/background-removal');
-      const blob = await removeBackground(file);
-      setImage(URL.createObjectURL(blob));
-    } catch (err: any) {
-      setError('حدث خطأ أثناء المعالجة. تأكد من أن الصورة صالحة وأن المكتبة مثبتة.');
-      console.error(err);
-    } finally {
-      setLoading(false);
+const presetBackgrounds = [
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
+  "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80",
+  "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&q=80",
+  
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80",
+  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80",
+  "https://images.unsplash.com/photo-1511884642898-4c92249e20b6?w=600&q=80",
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80",
+  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=600&q=80",
+  "https://images.unsplash.com/photo-1434725039720-aaad6dd32dfe?w=600&q=80",
+  "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=600&q=80",
+  "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600&q=80",
+  "https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=600&q=80",
+  "https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=600&q=80",
+  "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600&q=80",
+  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80",
+  "https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=600&q=80",
+  "https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=600&q=80",
+  "https://images.unsplash.com/photo-1510784722466-f2aa9c52fff6?w=600&q=80"
+];
+
+export default function RemoveBgPage() {
+  const { language } = useLanguage();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const translations = {
+    ar: {
+      title: "إزالة الخلفية وتعديل الصور",
+      desc: "أداة ذكية لإزالة الخلفية عبر Remove.bg وتغييرها بأجمل الخلفيات الطبيعية.",
+      dragDrop: "اختر صورة وسيبدأ عزل الخلفية بالكامل",
+      historyTitle: "سجل العمليات السابقة",
+      noHistory: "لا يوجد سجل عمليات حتى الآن.",
+      limitReached: "استنفدت الرصيد المجاني (2/2)",
+      proDesc: "لقد استهلكت الـ 2 عمليات المجانية المتاحة لك. التزم بالترقية للخطة الاحترافية لعمليات بلا حدود.",
+      proBtn: "الترقية إلى Pro",
+      usage: "الرصيد المجاني",
+      downloadItem: "تنزيل",
+      openItem: "معاينة",
+      authTitle: "تتطلب هذه الميزة تسجيل الدخول",
+      authDesc: "يرجى تسجيل الدخول بحسابك لتتمكن من استخدام الأداة وحفظ أعمالك في السجل.",
+      loginBtn: "تسجيل الدخول",
+      cancel: "إلغاء",
+      tabPhoto: "خلفيات",
+      tabColor: "لون",
+      tabBlur: "تمويه",
+      tabEdit: "تعديل",
+      scale: "الحجم (تكبير/تصغير)",
+      moveX: "أفقي (يمين/يسار)",
+      moveY: "عمودي (أعلى/أسفل)",
+      unlockFirst: "أزل الخلفية أولاً لتفعيل التعديل",
+      processNow: "إزالة الخلفية الآن",
+      download: "تحميل الصورة",
+      processing: "جاري إزالة الخلفية عبر Remove.bg..."
+    },
+    en: {
+      title: "Background Remover & Editor",
+      desc: "Smart tool to remove background via Remove.bg API.",
+      dragDrop: "Choose an image to start",
+      historyTitle: "Operations History",
+      noHistory: "No history available yet.",
+      limitReached: "Free Limit Reached (2/2)",
+      proDesc: "You have used your 2 free removals. Upgrade to Pro for unlimited usage.",
+      proBtn: "Upgrade to Pro",
+      usage: "Free Credits",
+      downloadItem: "Download",
+      openItem: "Preview",
+      authTitle: "Login Required",
+      authDesc: "Please log in to your account to use the tool and save history.",
+      loginBtn: "Log In",
+      cancel: "Cancel",
+      tabPhoto: "Scenery",
+      tabColor: "Color",
+      tabBlur: "Blur",
+      tabEdit: "Edit",
+      scale: "Scale",
+      moveX: "Horizontal",
+      moveY: "Vertical",
+      unlockFirst: "Remove background first to enable editing",
+      processNow: "Remove Background Now",
+      download: "Download Image",
+      processing: "Processing with API..."
+    },
+    tr: {
+      title: "Arka Plan Silici ve Editör",
+      desc: "Remove.bg API ile arka planı kaldırma aracı.",
+      dragDrop: "Görsel seçin",
+      historyTitle: "İşlem Geçmişi",
+      noHistory: "Henüz işlem geçmişi yok.",
+      limitReached: "Ücretsiz Sınıra Ulaşıldı (2/2)",
+      proDesc: "2 ücretsiz hakkınızı kullandınız. Sınırsız kullanım için Pro'ya yükseltin.",
+      proBtn: "Pro'ya Yükselt",
+      usage: "Ücretsiz Kredi",
+      downloadItem: "İndir",
+      openItem: "Önizle",
+      authTitle: "Giriş Yapılması Gerekiyor",
+      authDesc: "Aracı kullanmak ve geçmişi kaydetmek için giriş yapın.",
+      loginBtn: "Giriş Yap",
+      cancel: "İptal",
+      tabPhoto: "Manzara",
+      tabColor: "Renk",
+      tabBlur: "Bulanıklık",
+      tabEdit: "Düzenle",
+      scale: "Boyut",
+      moveX: "Yatay",
+      moveY: "Dikey",
+      unlockFirst: "Düzenlemeyi etkinleştirmek için önce arka planı kaldırın",
+      processNow: "Arka Planı Şimdi Sil",
+      download: "Görseli İndir",
+      processing: "İşleniyor..."
     }
   };
 
+  // @ts-ignore
+  const t = translations[language] || translations.ar;
+
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [processedImage, setProcessedImage] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<'photo' | 'color' | 'blur' | 'edit'>('photo');
+  const [bgType, setBgType] = useState<'transparent' | 'color' | 'preset'>('transparent');
+  const [selectedColor, setSelectedColor] = useState<string>('#ffffff');
+  const [selectedPresetBg, setSelectedPresetBg] = useState<string | null>(null);
+  const [blurAmount, setBlurAmount] = useState<number>(0);
+
+  const [scale, setScale] = useState<number>(1);
+  const [posX, setPosX] = useState<number>(0);
+  const [posY, setPosY] = useState<number>(0);
+
+  const [activeUser, setActiveUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [usageCount, setUsageCount] = useState<number>(0);
+  const [history, setHistory] = useState<any[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
+
+  const presetColors = [
+    '#ffffff', '#f3e8ff', '#fce7f3', '#fee2e2', '#fef3c7', '#dcfce7', '#e0f2fe', '#e0e7ff',
+    '#a855f7', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#1e1b4b', '#0f172a'
+  ];
+
+  const isValidUUID = (id: string) => {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  };
+
+  const fetchFromSupabase = async (user: any) => {
+    if (!user || !isValidUUID(user.id)) {
+      setIsLoadingData(false);
+      return;
+    }
+
+    try {
+      const { data: historyData, error: historyErr } = await supabase
+        .from('remove_bg_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (!historyErr && historyData) {
+        const formatted = historyData.map((item: any) => ({
+          id: item.id,
+          fileName: item.file_name,
+          date: new Date(item.created_at).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+          fileData: item.file_data
+        }));
+        setHistory(formatted);
+        setUsageCount(formatted.length);
+      }
+    } catch (err) {
+      console.error('Error fetching history:', err);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  useEffect(() => {
+    const initUser = async () => {
+      setIsLoadingData(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+
+      if (user) {
+        setActiveUser(user);
+        await fetchFromSupabase(user);
+      } else {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          setActiveUser(authUser);
+          await fetchFromSupabase(authUser);
+        } else {
+          setIsLoadingData(false);
+        }
+      }
+    };
+
+    initUser();
+  }, [language]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!activeUser) {
+      setShowAuthModal(true);
+      return;
+    }
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setSelectedImage(URL.createObjectURL(file));
+      setProcessedImage(null);
+      setScale(1); setPosX(0); setPosY(0);
+    }
+  };
+
+  // الاتصال المباشر بـ Remove.bg API مع إرسال المفتاح من ملف البيئة بأمان
+  const processBackgroundRemoval = async () => {
+    if (!activeUser || !isValidUUID(activeUser.id)) {
+      setShowAuthModal(true);
+      return;
+    }
+    if (!selectedFile) return;
+    if (usageCount >= 2) return;
+
+    setIsProcessing(true);
+
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_REMOVE_BG_API_KEY;
+      if (!apiKey) {
+        alert("تنبيه: مفتاح الـ API غير موجود في ملف .env.local!");
+        setIsProcessing(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('image_file', selectedFile);
+      formData.append('size', 'auto');
+
+      const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': apiKey,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('فشل الاتصال بخدمة إزالة الخلفية، تأكد من صحة مفتاح الـ API.');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setProcessedImage(url);
+      setActiveTab('edit');
+
+      const base64Data = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+
+      const currentDate = new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US');
+      const newFileName = `No_Bg_${Date.now().toString().slice(-5)}.png`;
+      const generatedId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+
+      const newHistoryItem = {
+        id: generatedId,
+        fileName: newFileName,
+        date: currentDate,
+        fileData: base64Data
+      };
+
+      await supabase
+        .from('remove_bg_history')
+        .insert({
+          id: generatedId,
+          user_id: activeUser.id,
+          file_name: newFileName,
+          file_data: base64Data
+        });
+
+      const updatedHistory = [newHistoryItem, ...history];
+      setHistory(updatedHistory);
+      setUsageCount(updatedHistory.length);
+
+    } catch (error: any) {
+      console.error("API Error:", error);
+      alert(error.message || "حدث خطأ أثناء معالجة الصورة عبر الـ API.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const openHistoryImage = (item: any) => {
+    if (!item.fileData) return alert("بيانات الصورة غير متوفرة.");
+    const win = window.open();
+    if (win) {
+      win.document.write(
+        `<img src="${item.fileData}" style="max-width:100%; height:auto; display:block; margin:auto; background:#111;" />`
+      );
+    }
+  };
+
+  if (isLoadingData) {
+    return (
+      <div className="min-h-screen py-32 px-6 flex items-center justify-center relative z-10">
+        <Loader2 className="w-12 h-12 text-pink-500 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    // أضفنا pt-32 وتنسيقات flex لتوسيط المحتوى أسفل الهيدر مباشرة
-    <div className="pt-32 pb-20 px-4 min-h-screen flex items-center justify-center">
-      <div className="max-w-xl w-full p-8 bg-white/5 border border-white/10 backdrop-blur-lg rounded-2xl text-center shadow-xl">
-        <h1 className="text-3xl font-bold mb-6 text-white">إزالة الخلفية بالذكاء الاصطناعي</h1>
+    <div className="min-h-screen py-32 px-6 relative z-10" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="glass-dark p-8 rounded-3xl border border-white/10 max-w-md w-full text-center shadow-2xl">
+            <div className="w-16 h-16 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogIn className="w-8 h-8 text-pink-500" />
+            </div>
+            <h3 className="text-2xl font-black text-white mb-2">{t.authTitle}</h3>
+            <p className="text-gray-400 mb-6 text-sm leading-relaxed">{t.authDesc}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-bold transition-colors"
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={() => router.push('/login')}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold transition-all shadow-lg"
+              >
+                {t.loginBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
         
-        {/* زر مخصص يطابق تصميم موقعك */}
-        <div className="flex flex-col items-center gap-4 mb-6">
-          <label className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-bold transition flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            اختر صورة
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            />
-          </label>
-          {fileName && <span className="text-sm text-gray-300">الملف المحدد: {fileName}</span>}
+        <div className="flex-1 flex flex-col lg:flex-row gap-6 glass-dark p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden min-h-[620px]">
+          
+          {usageCount >= 2 && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 text-center">
+               <div className="bg-gray-900 border border-pink-500/30 p-8 rounded-2xl max-w-md w-full shadow-2xl">
+                  <AlertCircle className="w-16 h-16 text-pink-500 mx-auto mb-4" />
+                  <h3 className="text-2xl font-black text-white mb-2">{t.limitReached}</h3>
+                  <p className="text-gray-400 mb-6 text-sm leading-relaxed">{t.proDesc}</p>
+                  <button
+                    onClick={() => router.push('/pricing')}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-3 rounded-xl font-bold transition-all shadow-lg"
+                  >
+                    {t.proBtn}
+                  </button>
+               </div>
+            </div>
+          )}
+
+          <div className="w-full lg:w-[320px] flex flex-col border-b lg:border-b-0 lg:border-l border-white/10 pl-0 lg:pl-6 pb-6 lg:pb-0">
+            
+            <div className="flex border-b border-white/10 mb-6">
+              <button 
+                onClick={() => setActiveTab('photo')} 
+                className={`flex-1 pb-3 text-xs font-bold flex items-center justify-center gap-1 ${activeTab === 'photo' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-gray-400'}`}
+              >
+                <ImageIcon className="w-4 h-4" /> {t.tabPhoto}
+              </button>
+              <button 
+                onClick={() => setActiveTab('color')} 
+                className={`flex-1 pb-3 text-xs font-bold flex items-center justify-center gap-1 ${activeTab === 'color' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-gray-400'}`}
+              >
+                <Palette className="w-4 h-4" /> {t.tabColor}
+              </button>
+              <button 
+                onClick={() => setActiveTab('blur')} 
+                className={`flex-1 pb-3 text-xs font-bold flex items-center justify-center gap-1 ${activeTab === 'blur' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-gray-400'}`}
+              >
+                <Wand2 className="w-4 h-4" /> {t.tabBlur}
+              </button>
+              <button 
+                onClick={() => {
+                  if (!processedImage) return alert(t.unlockFirst);
+                  setActiveTab('edit');
+                }} 
+                className={`flex-1 pb-3 text-xs font-bold flex items-center justify-center gap-1 ${activeTab === 'edit' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-gray-400'}`}
+              >
+                <Sliders className="w-4 h-4" /> {t.tabEdit}
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-1 max-h-[400px] custom-scrollbar">
+              {activeTab === 'photo' && (
+                <div className="space-y-3">
+                  <p className="text-xs text-gray-400 font-bold mb-2">اختر خلفية طبيعية جاهزة (20 خلفية):</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div onClick={() => { setBgType('transparent'); setSelectedPresetBg(null); }} className="aspect-square bg-white/5 border border-white/10 rounded-lg cursor-pointer flex items-center justify-center text-[10px] text-gray-300 checkered-bg" title="شفاف">شفاف</div>
+                    {presetBackgrounds.map((bgUrl, idx) => (
+                      <div 
+                        key={idx} 
+                        onClick={() => { setBgType('preset'); setSelectedPresetBg(bgUrl); }}
+                        className={`aspect-square rounded-lg cursor-pointer overflow-hidden border-2 transition-all ${selectedPresetBg === bgUrl ? 'border-pink-500 scale-105' : 'border-transparent hover:border-white/30'}`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={bgUrl} alt={`bg-${idx}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'color' && (
+                <div className="space-y-4">
+                  <p className="text-xs text-gray-400 font-bold mb-2">اختر لون الخلفية:</p>
+                  <div className="grid grid-cols-4 gap-2 mb-4">
+                    {presetColors.map((c, idx) => (
+                      <div key={idx} onClick={() => { setBgType('color'); setSelectedPresetBg(null); setSelectedColor(c); }} style={{ backgroundColor: c }} className="aspect-square rounded-lg cursor-pointer border border-white/25 hover:scale-105 transition-transform"></div>
+                    ))}
+                  </div>
+                  <input type="color" value={selectedColor} onChange={(e) => { setBgType('color'); setSelectedPresetBg(null); setSelectedColor(e.target.value); }} className="w-full h-10 rounded cursor-pointer bg-transparent border-0" />
+                </div>
+              )}
+
+              {activeTab === 'blur' && (
+                <div className="space-y-4">
+                  <p className="text-xs text-gray-400 font-bold mb-2">درجة التمويه (Blur):</p>
+                  <input type="range" min="0" max="30" value={blurAmount} onChange={(e) => setBlurAmount(Number(e.target.value))} className="w-full accent-pink-500" />
+                </div>
+              )}
+
+              {activeTab === 'edit' && (
+                <div className="space-y-6">
+                  {!processedImage ? (
+                    <p className="text-xs text-pink-400 text-center py-6 font-bold">{t.unlockFirst}</p>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-2">{t.scale} ({scale.toFixed(1)}x)</label>
+                        <input type="range" min="0.5" max="2.5" step="0.1" value={scale} onChange={(e) => setScale(Number(e.target.value))} className="w-full accent-pink-500" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-2">{t.moveX}</label>
+                        <input type="range" min="-150" max="150" value={posX} onChange={(e) => setPosX(Number(e.target.value))} className="w-full accent-pink-500" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 mb-2">{t.moveY}</label>
+                        <input type="range" min="-150" max="150" value={posY} onChange={(e) => setPosY(Number(e.target.value))} className="w-full accent-pink-500" />
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-white/10 mt-auto flex flex-col gap-3">
+              {!processedImage ? (
+                <button
+                  onClick={processBackgroundRemoval}
+                  disabled={!selectedImage || isProcessing || usageCount >= 2}
+                  className="btn-glowing w-full py-3 rounded-xl font-extrabold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : t.processNow}
+                </button>
+              ) : (
+                <a
+                  href={processedImage}
+                  download={`Edited_${Date.now()}.png`}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-extrabold text-sm transition-colors flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <Download className="w-5 h-5" />
+                  {t.download}
+                </a>
+              )}
+            </div>
+
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center relative bg-black/40 rounded-2xl border border-white/5 p-6 overflow-hidden checkered-bg">
+            {!selectedImage ? (
+              <div className="text-center">
+                <div className="w-20 h-20 bg-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-pink-500/20">
+                  <UploadCloud className="w-10 h-10 text-pink-400" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-1">مساحة العمل</h3>
+                <p className="text-sm text-gray-400 mb-6">{t.dragDrop}</p>
+                <label className="btn-glowing px-6 py-3 rounded-xl font-bold text-white cursor-pointer inline-block text-sm">
+                  اختر صورة
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+              </div>
+            ) : (
+              <div 
+                className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-xl"
+                style={{
+                  backgroundColor: bgType === 'color' ? selectedColor : 'transparent',
+                  backgroundImage: bgType === 'preset' && selectedPresetBg ? `url(${selectedPresetBg})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  filter: `blur(${blurAmount}px)`
+                }}
+              >
+                {isProcessing && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <Loader2 className="w-10 h-10 text-pink-500 animate-spin mb-3" />
+                    <span className="text-sm font-bold text-white">{t.processing}</span>
+                  </div>
+                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={processedImage || selectedImage}
+                  alt="Workspace"
+                  style={{
+                    transform: `translate(${posX}px, ${posY}px) scale(${scale})`,
+                    transition: 'transform 0.05s ease-out'
+                  }}
+                  className="max-h-[450px] object-contain drop-shadow-2xl z-10"
+                />
+              </div>
+            )}
+          </div>
+
         </div>
 
-        {loading && (
-          <div className="text-purple-400 animate-pulse my-4 font-bold">
-            جاري المعالجة محلياً في متصفحك... (قد يستغرق بضع ثواني)
+        <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-6">
+          
+          <div className="glass-dark p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
+             <div className="flex items-center justify-between mb-3">
+               <h3 className="text-sm font-bold text-gray-400">{t.usage}</h3>
+             </div>
+             <div className="w-full bg-gray-800 rounded-full h-3 mb-2 overflow-hidden border border-gray-700">
+               <div 
+                 className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500" 
+                 style={{ width: `${Math.min((usageCount / 2) * 100, 100)}%` }}
+               ></div>
+             </div>
+             <p className="text-xs text-right text-gray-500 font-medium">{usageCount} / 2</p>
           </div>
-        )}
-        
-        {error && <div className="text-red-400 my-4 bg-red-400/10 p-3 rounded-lg">{error}</div>}
 
-        {image && (
-          <div className="mt-6 flex flex-col items-center">
-            {/* خلفية شطرنجية لإظهار الشفافية */}
-            <div className="bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-gray-800 rounded-lg p-4 mb-4 w-full flex justify-center border border-white/10">
-              <img src={image} alt="Result" className="max-h-80 object-contain drop-shadow-lg" />
-            </div>
-            <a
-              href={image}
-              download="no-bg-image.png"
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold transition w-full md:w-auto"
-            >
-              تحميل الصورة (PNG)
-            </a>
+          <div className="glass-dark p-6 rounded-3xl border border-white/10 shadow-2xl flex-1 max-h-[500px] overflow-hidden flex flex-col relative">
+             <div className="flex items-center gap-2 mb-6 pb-4 border-b border-white/10">
+               <History className="w-5 h-5 text-pink-400" />
+               <h3 className="text-lg font-bold text-white">{t.historyTitle}</h3>
+             </div>
+             
+             <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+               {history.length === 0 ? (
+                 <p className="text-sm text-gray-500 text-center py-10">{t.noHistory}</p>
+               ) : (
+                 history.map((item) => (
+                   <div key={item.id} className="flex items-center justify-between bg-black/40 p-4 rounded-xl border border-white/5 hover:border-pink-500/40 transition-colors gap-3">
+                     <div className="overflow-hidden flex-1">
+                       <p className="text-sm font-bold text-gray-200 truncate mb-1" dir="ltr" title={item.fileName}>
+                         {item.fileName}
+                       </p>
+                       <p className="text-xs text-gray-500">{item.date}</p>
+                     </div>
+
+                     <div className="flex items-center gap-2 shrink-0">
+                       <button
+                         onClick={() => openHistoryImage(item)}
+                         className="text-purple-400 hover:text-purple-300 transition-colors p-2 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg"
+                         title={t.openItem}
+                       >
+                         <Eye className="w-4 h-4" />
+                       </button>
+                       {item.fileData && (
+                         <a
+                           href={item.fileData}
+                           download={item.fileName}
+                           className="text-green-400 hover:text-green-300 transition-colors p-2 bg-green-500/10 hover:bg-green-500/20 rounded-lg"
+                           title={t.downloadItem}
+                         >
+                           <Download className="w-4 h-4" />
+                         </a>
+                       )}
+                     </div>
+                   </div>
+                 ))
+               )}
+             </div>
           </div>
-        )}
+
+        </div>
+
       </div>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .checkered-bg {
+          background-image: linear-gradient(45deg, #1f1f1f 25%, transparent 25%), 
+                            linear-gradient(-45deg, #1f1f1f 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #1f1f1f 75%), 
+                            linear-gradient(-45deg, transparent 75%, #1f1f1f 75%);
+          background-size: 20px 20px;
+          background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+      `}} />
     </div>
   );
 }

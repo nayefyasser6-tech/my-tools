@@ -60,7 +60,8 @@ export default function PricingPage() {
     <section className="min-h-screen py-32 px-6 relative z-10" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-7xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-pink-500">
+          {/* إضافة leading-relaxed و pb-4 */}
+          <h1 className="text-5xl md:text-7xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-pink-500 leading-relaxed pb-4">
             {t('pricing_main_title')}
           </h1>
         </div>
@@ -74,18 +75,23 @@ export default function PricingPage() {
             <div className="mb-8">
               <span className="text-4xl font-black text-white">{t('free_limited')}</span>
             </div>
+            {/* القائمة المحدثة بالحدود المجانية الأربعة */}
             <ul className="space-y-4 mb-8 flex-1">
               <li className="flex items-center text-gray-200 font-medium">
                 <svg className={`w-5 h-5 text-purple-400 ${language === 'ar' ? 'ml-3' : 'mr-3'} shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                {t('feat_pdf_free')}
+                {language === 'ar' ? 'تحويل Word إلى PDF (ملفين)' : language === 'tr' ? "Word'den PDF'e (2 dosya)" : 'Word to PDF (2 files)'}
               </li>
               <li className="flex items-center text-gray-200 font-medium">
                 <svg className={`w-5 h-5 text-purple-400 ${language === 'ar' ? 'ml-3' : 'mr-3'} shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                {t('feat_bg_free')}
+                {language === 'ar' ? 'دمج ملفات PDF (3 ملفات)' : language === 'tr' ? 'PDF Birleştirme (3 dosya)' : 'Merge PDF (3 files)'}
               </li>
               <li className="flex items-center text-gray-200 font-medium">
                 <svg className={`w-5 h-5 text-purple-400 ${language === 'ar' ? 'ml-3' : 'mr-3'} shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                {t('feat_cv_free')}
+                {language === 'ar' ? 'صانع السيرة الذاتية (سيرة واحدة)' : language === 'tr' ? 'CV Oluşturucu (1 CV)' : 'CV Maker (1 CV)'}
+              </li>
+              <li className="flex items-center text-gray-200 font-medium">
+                <svg className={`w-5 h-5 text-purple-400 ${language === 'ar' ? 'ml-3' : 'mr-3'} shrink-0`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                {language === 'ar' ? 'إزالة الخلفية (صورتين)' : language === 'tr' ? 'Arka Planı Kaldır (2 resim)' : 'Remove Background (2 images)'}
               </li>
             </ul>
             
@@ -113,10 +119,13 @@ export default function PricingPage() {
             <div className={`absolute top-5 ${language === 'ar' ? 'left-5' : 'right-5'} bg-gradient-to-r from-pink-500 to-purple-600 px-3 py-1 rounded-full text-xs font-bold text-white`}>
               {t('pro_badge')}
             </div>
-            <h3 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 mb-2">{t('plan_pro')}</h3>
+            {/* إضافة leading-relaxed و pb-3 */}
+            <h3 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 mb-2 leading-relaxed pb-3">
+              {t('plan_pro')}
+            </h3>
             <p className="text-gray-300 font-medium mb-6">{t('plan_pro_desc')}</p>
             <div className="mb-8">
-              <span className="text-5xl font-black text-white">$25</span>
+              <span className="text-5xl font-black text-white">$9.90</span>
               <span className={`text-gray-400 ${language === 'ar' ? 'ml-2' : 'mr-2'}`}>{t('monthly')}</span>
             </div>
             <ul className="space-y-4 mb-8 flex-1">

@@ -1,12 +1,11 @@
 "use client";
 
 import Link from 'next/link';
- import { useLanguage } from '@/components/LanguageProvider';
+import { useLanguage } from '@/components/LanguageProvider';
 
 export default function ToolsPage() {
   const { t, language } = useLanguage();
 
-  // المصفوفة أصبحت داخل الدالة لتقرأ دالة الترجمة t
   const tools = [
     {
       id: 'word-to-pdf',
@@ -50,7 +49,8 @@ export default function ToolsPage() {
     <section className="min-h-screen py-32 px-6 relative z-10 flex items-center justify-center">
       <div className="max-w-7xl mx-auto w-full">
         <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-7xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-pink-500">
+          {/* إضافة leading-relaxed و pb-4 لحل مشكلة قص الحروف السفلية */}
+          <h1 className="text-5xl md:text-7xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-pink-500 leading-relaxed pb-4">
             {t('tools_page_title')}
           </h1>
         </div>
@@ -75,7 +75,6 @@ export default function ToolsPage() {
 
                 <div className="mt-6 flex items-center text-pink-400 font-bold group-hover:text-pink-300">
                   <span>{t('start_using')}</span>
-                  {/* تغيير اتجاه السهم عند التمرير حسب اللغة */}
                   <svg className={`w-5 h-5 ${language === 'ar' ? 'mr-2 group-hover:-translate-x-2' : 'ml-2 group-hover:translate-x-2'} transform transition-transform`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={language === 'ar' ? "M10 19l-7-7m0 0l7-7m-7 7h18" : "M14 5l7 7m0 0l-7 7m7-7H3"} />
                   </svg>

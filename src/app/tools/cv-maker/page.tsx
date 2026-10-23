@@ -1,244 +1,720 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
-import { Download, Plus, Trash2, User, Briefcase, GraduationCap, Code, Sparkles, Loader2 } from 'lucide-react';
-
-const localDict = {
-  ar: {
-    page_title: "صانع السيرة الذاتية", page_desc: "أدخل بياناتك الأساسية وحمل سيرتك فوراً.",
-    personal_info: "المعلومات الأساسية", name: "الاسم الكامل", name_ph: "مثال: المعتصم بالله",
-    job_title: "المسمى الوظيفي", job_title_ph: "مثال: مطور واجهات أمامية",
-    email: "البريد الإلكتروني", phone: "رقم الهاتف",
-    summary: "نبذة احترافية (بالذكاء الاصطناعي)", summary_ph: "اكتب مسمى وظيفي أو اختصار، واضغط تحسين بالذكاء الاصطناعي...",
-    ai_btn: "توليد بالذكاء الاصطناعي", ai_loading: "جاري التوليد...",
-    experience: "الخبرات العملية", company: "اسم الشركة", role: "المسمى الوظيفي", duration: "الفترة (مثال: 2020 - 2023)",
-    education: "التعليم الأكاديمي", university: "الجامعة / المعهد", degree: "التخصص / الدرجة",
-    skills: "المهارات (افصل بفاصلة)", skills_ph: "React, Next.js, Tailwind",
-    add_exp: "إضافة خبرة", add_edu: "إضافة تعليم", download: "تحميل (PDF)"
-  },
-  en: {
-    page_title: "CV Maker", page_desc: "Enter your core details and download instantly.",
-    personal_info: "Basic Info", name: "Full Name", name_ph: "e.g., Al-Mutasim Billah",
-    job_title: "Job Title", job_title_ph: "e.g., Frontend Developer",
-    email: "Email", phone: "Phone",
-    summary: "Professional Summary (AI)", summary_ph: "Type a title or brief idea, then click AI enhance...",
-    ai_btn: "Generate with AI", ai_loading: "Generating...",
-    experience: "Experience", company: "Company", role: "Role", duration: "Duration (e.g., 2020 - 2023)",
-    education: "Education", university: "University", degree: "Degree",
-    skills: "Skills (comma separated)", skills_ph: "React, Next.js, Tailwind",
-    add_exp: "Add Experience", add_edu: "Add Education", download: "Download (PDF)"
-  },
-  tr: {
-    page_title: "CV Oluşturucu", page_desc: "Temel bilgilerinizi girin ve hemen indirin.",
-    personal_info: "Temel Bilgiler", name: "Ad Soyad", name_ph: "Örn: El-Mutasem",
-    job_title: "Meslek", job_title_ph: "Örn: Frontend Geliştirici",
-    email: "E-posta", phone: "Telefon",
-    summary: "Profesyonel Özet (Yapay Zeka)", summary_ph: "Bir unvan yazın ve yapay zeka ile geliştirin...",
-    ai_btn: "Yapay Zeka ile Üret", ai_loading: "Üretiliyor...",
-    experience: "Deneyim", company: "Şirket", role: "Pozisyon", duration: "Süre (Örn: 2020 - 2023)",
-    education: "Eğitim", university: "Üniversite", degree: "Derece",
-    skills: "Yetenekler (Virgülle)", skills_ph: "React, Next.js, Tailwind",
-    add_exp: "Deneyim Ekle", add_edu: "Deneyim Ekle", download: "İndir (PDF)"
-  }
-};
+import { useRouter } from 'next/navigation';
+import { Download, Sparkles, Loader2, Plus, FileText, Edit2, Clock, Link, AlertCircle, Trash2, LogIn } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
 
 export default function CvMakerPage() {
   const { language } = useLanguage();
-  const t = localDict[language] || localDict['ar'];
+  const router = useRouter();
+  const supabase = createClient();
 
-  const [data, setData] = useState({
-    name: '', title: '', email: '', phone: '', summary: '',
-    experience: [{ id: 1, company: '', role: '', duration: '' }],
-    education: [{ id: 1, university: '', degree: '', duration: '' }],
-    skills: ''
-  });
+  const translations = {
+    ar: {
+      summary: 'الملخص', exp: 'الخبرة', edu: 'التعليم', skills: 'المهارات', langs: 'اللغات', photo: 'الصورة',
+      dashboardTitle: 'مرحباً، لننشئ شيئاً جديداً',
+      dashboardSubtitle: 'أنشئ سيرة ذاتية، ثم حوّلها إلى معرض أعمال أو رسالة تعريفية متى شئت.',
+      noCvs: 'لا توجد سير ذاتية بعد',
+      createFirstDesc: 'اختر تصميماً وسنبني سيرتك الذاتية الأولى من بياناتك.',
+      createFirstBtn: 'أنشئ سيرتك الذاتية الأولى',
+      newCvBtn: 'سيرة ذاتية جديدة',
+      yourResumes: 'سيرك الذاتية',
+      resumeCount: 'سيرة ذاتية {count}',
+      edit: 'تعديل السيرة',
+      share: 'مشاركة',
+      downloadBtn: 'تحميل PDF',
+      back: 'العودة للسجل',
+      wizardTitle: 'توليد سيرة احترافية',
+      fullName: 'الاسم الكامل',
+      jobTitle: 'المسمى الوظيفي',
+      contactOptional: 'معلومات الاتصال (اختياري)',
+      email: 'البريد الإلكتروني',
+      phone: 'رقم الهاتف',
+      location: 'العنوان / المدينة',
+      notes: 'ملاحظات لتخصيص السيرة',
+      cancel: 'إلغاء',
+      generateSubmit: 'توليد السيرة',
+      loading: 'جاري كتابة السيرة الذاتية...',
+      limitTitle: 'هل تريد سيرة ذاتية أخرى لوظيفة مختلفة؟',
+      limitDesc: 'تتضمن الخطة المجانية سيرة ذاتية واحدة. قم بالترقية لتكون لديك سيرة ذاتية مخصصة جاهزة لكل وظيفة تتقدم إليها.',
+      upgradeBtn: 'الترقية إلى Pro',
+      deleteConfirm: 'هل أنت متأكد من حذف هذه السيرة الذاتية؟ لا يمكن التراجع عن هذا الإجراء.',
+      authTitle: 'تتطلب هذه الميزة تسجيل الدخول',
+      authDesc: 'يرجى تسجيل الدخول أو إنشاء حساب مجاني للتمكن من توليد السيرة الذاتية وحفظها في سجلك الخاص.',
+      loginBtn: 'تسجيل الدخول',
+      jobTitleReq: 'يرجى إدخال المسمى الوظيفي أولاً.',
+      genFail: 'لم يتمكن الذكاء الاصطناعي من توليد السيرة. حاول مجدداً.',
+      errorTitle: 'تعذّر إتمام العملية',
+      okBtn: 'حسناً',
+      busyMsg: 'خوادم الذكاء الاصطناعي مشغولة حالياً، حاول مجدداً بعد لحظات.',
+      quotaMsg: 'وصلت خدمة الذكاء الاصطناعي لحدها اليومي. حاول لاحقاً.',
+      loadSteps: ['نحلل مسماك الوظيفي...', 'نكتب الملخص المهني...', 'نبني الخبرات والمهارات...', 'اللمسات الأخيرة...'],
+      timeUsual: 'عادةً تستغرق أقل من 20 ثانية • {s} ث',
+      timeAlmost: 'أوشكنا على الانتهاء، شكراً لصبرك • {s} ث',
+      dontClose: 'الرجاء عدم إغلاق الصفحة'
+    },
+    en: {
+      summary: 'Summary', exp: 'Experience', edu: 'Education', skills: 'Skills', langs: 'Languages', photo: 'Photo',
+      dashboardTitle: `Hello, let's create something new`,
+      dashboardSubtitle: 'Create a resume, then turn it into a portfolio or cover letter whenever you want.',
+      noCvs: 'No resumes yet',
+      createFirstDesc: 'We will build your first resume from your data.',
+      createFirstBtn: 'Create your first resume',
+      newCvBtn: 'New Resume',
+      yourResumes: 'Your Resumes',
+      resumeCount: '{count} Resumes',
+      edit: 'Edit CV',
+      share: 'Share',
+      downloadBtn: 'Download PDF',
+      back: 'Back to Dashboard',
+      wizardTitle: 'Generate Professional CV',
+      fullName: 'Full Name',
+      jobTitle: 'Job Title',
+      contactOptional: 'Contact Info (Optional)',
+      email: 'Email Address',
+      phone: 'Phone Number',
+      location: 'Address / City',
+      notes: 'Notes to customize CV',
+      cancel: 'Cancel',
+      generateSubmit: 'Generate CV',
+      loading: 'Writing your resume...',
+      limitTitle: 'Want another resume for a different job?',
+      limitDesc: 'The free plan includes one resume. Upgrade to have a custom resume ready for every job you apply to.',
+      upgradeBtn: 'Upgrade to Pro',
+      deleteConfirm: 'Are you sure you want to delete this resume? This action cannot be undone.',
+      authTitle: 'Login Required',
+      authDesc: 'Please login or create a free account to generate and save your CV securely.',
+      loginBtn: 'Log In',
+      jobTitleReq: 'Job title is required.',
+      genFail: 'AI failed to generate CV. Please try again.',
+      errorTitle: 'Something went wrong',
+      okBtn: 'OK',
+      busyMsg: 'The AI servers are busy right now. Please try again in a moment.',
+      quotaMsg: 'The AI service has reached its daily limit. Please try again later.',
+      loadSteps: ['Analyzing your job title...', 'Writing your professional summary...', 'Building experience and skills...', 'Final touches...'],
+      timeUsual: 'Usually takes under 20 seconds • {s}s',
+      timeAlmost: 'Almost done, thanks for waiting • {s}s',
+      dontClose: 'Please do not close this page'
+    },
+    tr: {
+      summary: 'Özet', exp: 'Deneyim', edu: 'Eğitim', skills: 'Yetenekler', langs: 'Diller', photo: 'Fotoğraf',
+      dashboardTitle: `Merhaba, yeni bir şey yaratalım`,
+      dashboardSubtitle: 'Bir özgeçmiş oluşturun, ardından portföye dönüştürün.',
+      noCvs: 'Henüz özgeçmiş yok',
+      createFirstDesc: 'İlk özgeçmişinizi verilerinizden oluşturacağız.',
+      createFirstBtn: 'İlk Özgeçmişini Oluştur',
+      newCvBtn: 'Yeni Özgeçmiş',
+      yourResumes: 'Özgeçmişleriniz',
+      resumeCount: '{count} Özgeçmiş',
+      edit: 'CV Düzenle',
+      share: 'Paylaş',
+      downloadBtn: 'PDF İndir',
+      back: 'Kontrol Paneline Dön',
+      wizardTitle: 'Profesyonel CV Oluştur',
+      fullName: 'Ad Soyad',
+      jobTitle: 'İş Unvanı',
+      contactOptional: 'İletişim Bilgileri (İsteğe Bağlı)',
+      email: 'E-posta',
+      phone: 'Telefon Numarası',
+      location: 'Adres / Şehir',
+      notes: 'CV Özelleştirme Notları',
+      cancel: 'İptal',
+      generateSubmit: 'CV Oluştur',
+      loading: 'Özgeçmişiniz yazılıyor...',
+      limitTitle: 'Farklı bir iş için başka bir CV mi istiyorsunuz?',
+      limitDesc: 'Ücretsiz plan bir özgeçmiş içerir. Her iş başvurusuna özel CV\'niz olması için yükseltin.',
+      upgradeBtn: 'Pro\'ya Yükselt',
+      deleteConfirm: 'Bu özgeçmişi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+      authTitle: 'Giriş Yapılması Gerekiyor',
+      authDesc: 'CV oluşturmak ve güvenle kaydetmek için lütfen giriş yapın veya ücretsiz bir hesap oluşturun.',
+      loginBtn: 'Giriş Yap',
+      jobTitleReq: 'İş unvanı gereklidir.',
+      genFail: 'Yapay zeka CV oluşturamadı. Lütfen tekrar deneyin.',
+      errorTitle: 'İşlem tamamlanamadı',
+      okBtn: 'Tamam',
+      busyMsg: 'Yapay zeka sunucuları şu anda meşgul. Lütfen birazdan tekrar deneyin.',
+      quotaMsg: 'Yapay zeka hizmeti günlük sınırına ulaştı. Lütfen daha sonra tekrar deneyin.',
+      loadSteps: ['İş unvanınız analiz ediliyor...', 'Profesyonel özet yazılıyor...', 'Deneyim ve yetenekler hazırlanıyor...', 'Son dokunuşlar...'],
+      timeUsual: 'Genellikle 20 saniyeden kısa sürer • {s} sn',
+      timeAlmost: 'Neredeyse bitti, sabrınız için teşekkürler • {s} sn',
+      dontClose: 'Lütfen bu sayfayı kapatmayın'
+    }
+  };
+  // @ts-ignore
+  const t = translations[language] || translations.ar;
+
+  const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [cvHistory, setCvHistory] = useState<any[]>([]);
+  const [activeUser, setActiveUser] = useState<any>(null);
 
   const [aiLoading, setAiLoading] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [wizardError, setWizardError] = useState('');
+  const [errorModal, setErrorModal] = useState(''); // نص الخطأ الذي يظهر في النافذة بدل alert
 
-  const enhanceWithAI = async () => {
-    if (!data.title && !data.summary) {
-      alert("الرجاء كتابة المسمى الوظيفي أو فكرة أولاً ليقوم الذكاء الاصطناعي بصياغتها.");
+  const [elapsed, setElapsed] = useState(0); // عداد الثواني أثناء التوليد
+
+  useEffect(() => {
+    if (!aiLoading) {
+      setElapsed(0);
       return;
     }
-    setAiLoading(true);
+    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [aiLoading]);
+
+  const defaultCvState = {
+    name: '', title: '', email: '', phone: '', location: '', linkedin: '',
+    summary: '', experience: [], education: [], skills: [], languages: []
+  };
+
+  const [cvData, setCvData] = useState<any>(defaultCvState);
+  const [wizardData, setWizardData] = useState({ name: '', title: '', notes: '', email: '', phone: '', location: '' });
+
+  // حفظ آمن في المتصفح: إذا امتلأ التخزين لا يفشل التوليد بسببه
+  const saveLocal = (key: string, value: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.warn('localStorage is full or unavailable');
+    }
+  };
+
+  const loadUserData = async (user: any) => {
+    if (!user) {
+      setCvHistory([]);
+      return;
+    }
+
+    // جلب السجل المحلي المعزول للمستخدم
+    const storageKey = `cvs_${user.id}`;
+    try {
+      const localData = localStorage.getItem(storageKey);
+      if (localData) {
+        setCvHistory(JSON.parse(localData));
+      }
+    } catch (e) {
+      console.warn('Local history could not be read');
+    }
+
+    // المزامنة مع قاعدة البيانات في الخلفية
+    try {
+      const res = await fetch(`/api/cv-history?userId=${user.id}`);
+      if (res.ok) {
+        const dbData = await res.json();
+        if (dbData.history) {
+          setCvHistory(dbData.history);
+          saveLocal(storageKey, dbData.history);
+        }
+      }
+    } catch (e) {
+      console.error("Sync error:", e);
+    }
+  };
+
+  useEffect(() => {
+    // التقاط الجلسة الحالية
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
+      setActiveUser(session?.user || null);
+      if (session?.user) loadUserData(session.user);
+    });
+
+    // مراقبة فورية لأي تغيير
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      setActiveUser(session?.user || null);
+      loadUserData(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleNewCvClick = () => {
+    // الاعتماد على حالة المتصفح اللحظية (Zero-Delay)
+    if (!activeUser) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // التحقق من الحد المسموح (سيرة واحدة) مجاناً
+    if (cvHistory.length >= 1) {
+      setShowLimitModal(true);
+    } else {
+      setShowWizard(true);
+      setWizardError('');
+    }
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => setPhotoUrl(event.target?.result as string);
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const handleDeleteCv = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(t.deleteConfirm)) return;
+    if (!activeUser) return;
+
+    // حذف فوري من الواجهة والسجل المعزول
+    const newHistory = cvHistory.filter(cv => cv.id !== id);
+    setCvHistory(newHistory);
+    saveLocal(`cvs_${activeUser.id}`, newHistory);
+
+    // الإرسال لقاعدة البيانات
+    try {
+      await fetch(`/api/cv-history?id=${id}&userId=${activeUser.id}`, { method: 'DELETE' });
+    } catch (error) {
+      console.error("Delete error", error);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (aiLoading) return; // منع الضغط المزدوج
+
+    if (!wizardData.title) {
+      setWizardError(t.jobTitleReq);
+      return;
+    }
+
+    if (!activeUser) {
+      setShowWizard(false);
+      setShowAuthModal(true);
+      return;
+    }
+
+    setShowWizard(false);
+    setAiLoading(true); // تظهر نافذة التحميل فوراً
+    setWizardError('');
+
     try {
       const res = await fetch('/api/ai-cv', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: data.summary || data.title, language: language })
+        body: JSON.stringify({ data: wizardData, language })
       });
-      const resData = await res.json();
+      const resData = await res.json().catch(() => ({}));
+
+      // حالات الخطأ المعروفة تظهر في نوافذ جميلة بدل alert
+      if (res.status === 401) {
+        setShowAuthModal(true);
+        return;
+      }
+      if (resData.limitReached) {
+        setShowLimitModal(true);
+        return;
+      }
+      if (res.status === 429) {
+        setErrorModal(t.quotaMsg);
+        return;
+      }
+      if (res.status === 503) {
+        setErrorModal(t.busyMsg);
+        return;
+      }
+
       if (resData.result) {
-        setData(prev => ({ ...prev, summary: resData.result }));
+        const finalData = {
+          ...defaultCvState,
+          ...resData.result,
+          name: wizardData.name || resData.result.name,
+          title: wizardData.title || resData.result.title,
+          email: wizardData.email,
+          phone: wizardData.phone,
+          location: wizardData.location
+        };
+
+        setCvData(finalData);
+
+        const newRecord = {
+          id: crypto.randomUUID(),
+          date: new Date().toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' }),
+          data: finalData,
+          photo: photoUrl,
+          userId: activeUser.id
+        };
+
+        // الحفظ في المتصفح تحت معرف المستخدم فوراً
+        const updatedHistory = [newRecord, ...cvHistory];
+        setCvHistory(updatedHistory);
+        saveLocal(`cvs_${activeUser.id}`, updatedHistory);
+        setView('editor');
+        setWizardData({ name: '', title: '', notes: '', email: '', phone: '', location: '' });
+
+        // الإرسال لقاعدة البيانات (مع تسجيل الخطأ إن فشل الحفظ)
+        fetch('/api/cv-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newRecord)
+        })
+          .then(async (r) => {
+            if (!r.ok) console.error('CV save failed:', r.status, await r.text());
+          })
+          .catch(() => console.error('CV save failed: network'));
+
       } else {
-        alert("فشل توليد النص من الذكاء الاصطناعي.");
+        setErrorModal(t.genFail);
       }
     } catch (e) {
-      alert("حدث خطأ في الاتصال بالخادم.");
+      setErrorModal(t.genFail);
+    } finally {
+      setAiLoading(false); // تختفي نافذة التحميل دائماً، نجح الطلب أو فشل
     }
-    setAiLoading(false);
   };
 
   const handleDownload = () => window.print();
 
+  const openOldCv = (record: any) => {
+    setCvData(record.data);
+    setPhotoUrl(record.photo);
+    setView('editor');
+  };
+
+  // نصوص ونسبة التقدم لنافذة التحميل
+  const loadingSteps: string[] = t.loadSteps;
+  const stepIndex = Math.min(loadingSteps.length - 1, Math.floor(elapsed / 5));
+  const progress = Math.min(95, Math.round(100 * (1 - Math.exp(-elapsed / 10))));
+  const timeText = (elapsed > 25 ? t.timeAlmost : t.timeUsual).replace('{s}', String(elapsed));
+
   return (
-    <div className="min-h-screen pt-28 pb-10 px-4 md:px-8 relative z-10" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen pt-28 pb-20 px-4 md:px-8 bg-gradient-to-br from-[#2e1065] via-[#4a044e] to-[#2e1065]" dir={language === 'en' ? 'ltr' : 'rtl'}>
+
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          body * { visibility: hidden; }
-          #cv-preview, #cv-preview * { visibility: visible; }
-          #cv-preview { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; box-shadow: none; background: white; }
-          header, footer, .no-print { display: none !important; }
+          body * { visibility: hidden !important; }
+          #cv-preview, #cv-preview * { visibility: visible !important; }
+          #cv-preview { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; box-shadow: none; }
+          @page { margin: 0; }
         }
       `}} />
 
-      <div className="max-w-7xl mx-auto no-print text-center mb-10">
-        <h1 className="text-4xl md:text-5xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500">{t.page_title}</h1>
-        <p className="text-gray-400 text-lg">{t.page_desc}</p>
-      </div>
-
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-5 glass-dark p-6 rounded-3xl border border-white/10 shadow-xl space-y-8 max-h-[80vh] overflow-y-auto custom-scrollbar no-print">
-          
-          <div className="space-y-4">
-            <h3 className="text-xl font-black text-white flex items-center gap-2 border-b border-white/10 pb-2"><User className="w-5 h-5 text-pink-400" /> {t.personal_info}</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <input type="text" placeholder={t.name_ph} className="col-span-2 w-full bg-black/30 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-pink-500 font-bold" value={data.name} onChange={e => setData({...data, name: e.target.value})} />
-              <input type="text" placeholder={t.job_title_ph} className="col-span-2 w-full bg-black/30 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-pink-500" value={data.title} onChange={e => setData({...data, title: e.target.value})} />
-              <input type="email" placeholder={t.email} className="w-full bg-black/30 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-pink-500" value={data.email} onChange={e => setData({...data, email: e.target.value})} dir="ltr"/>
-              <input type="tel" placeholder={t.phone} className="w-full bg-black/30 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-pink-500" value={data.phone} onChange={e => setData({...data, phone: e.target.value})} dir="ltr"/>
-            </div>
-
-            {/* حقل النبذة المساعدة بالذكاء الاصطناعي */}
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-bold text-gray-300">{t.summary}</label>
-                <button 
-                  onClick={enhanceWithAI} 
-                  disabled={aiLoading}
-                  className="bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/50 text-purple-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
-                >
-                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-pink-400" />}
-                  {aiLoading ? t.ai_loading : t.ai_btn}
-                </button>
-              </div>
-              <textarea 
-                placeholder={t.summary_ph} 
-                rows={3} 
-                className="w-full bg-black/30 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-pink-500 resize-none" 
-                value={data.summary} 
-                onChange={e => setData({...data, summary: e.target.value})} 
+      {/* نافذة التحميل أثناء توليد السيرة */}
+      {aiLoading && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 text-center">
+          <div className="bg-[#170c2b] border border-purple-500/30 p-10 rounded-3xl w-full max-w-md shadow-2xl">
+            <Loader2 className="w-12 h-12 animate-spin text-fuchsia-500 mx-auto mb-6" />
+            <h2 className="text-xl font-bold text-white mb-2">{t.loading}</h2>
+            <p className="text-purple-200/80 mb-6 min-h-[24px]">{loadingSteps[stepIndex]}</p>
+            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-3">
+              <div
+                className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 transition-all duration-1000"
+                style={{ width: `${progress}%` }}
               />
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <h3 className="text-xl font-black text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-purple-400" /> {t.experience}</h3>
-              <button onClick={() => setData({...data, experience: [...data.experience, { id: Date.now(), company: '', role: '', duration: '' }]})} className="text-xs font-bold text-pink-400 hover:text-pink-300 flex items-center gap-1"><Plus className="w-4 h-4"/> {t.add_exp}</button>
-            </div>
-            {data.experience.map((exp, i) => (
-              <div key={exp.id} className="p-4 bg-white/5 rounded-xl border border-white/5 space-y-3 relative">
-                <button onClick={() => setData({...data, experience: data.experience.filter(e => e.id !== exp.id)})} className="absolute top-3 left-3 text-gray-500 hover:text-red-400"><Trash2 className="w-4 h-4"/></button>
-                <input type="text" placeholder={t.company} className="w-full bg-transparent border-b border-gray-700 text-white px-2 py-1 focus:border-pink-500 outline-none font-bold" value={exp.company} onChange={e => { const newExp = [...data.experience]; newExp[i].company = e.target.value; setData({...data, experience: newExp}); }} />
-                <div className="grid grid-cols-2 gap-3">
-                  <input type="text" placeholder={t.role} className="w-full bg-transparent border-b border-gray-700 text-white px-2 py-1 focus:border-pink-500 outline-none" value={exp.role} onChange={e => { const newExp = [...data.experience]; newExp[i].role = e.target.value; setData({...data, experience: newExp}); }} />
-                  <input type="text" placeholder={t.duration} className="w-full bg-transparent border-b border-gray-700 text-white px-2 py-1 focus:border-pink-500 outline-none text-sm" value={exp.duration} onChange={e => { const newExp = [...data.experience]; newExp[i].duration = e.target.value; setData({...data, experience: newExp}); }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex justify-between border-b border-white/10 pb-2">
-              <h3 className="text-xl font-black text-white flex items-center gap-2"><GraduationCap className="w-5 h-5 text-pink-400" /> {t.education}</h3>
-              <button onClick={() => setData({...data, education: [...data.education, { id: Date.now(), university: '', degree: '', duration: '' }]})} className="text-xs font-bold text-pink-400 hover:text-pink-300 flex items-center gap-1"><Plus className="w-4 h-4"/> {t.add_edu}</button>
-            </div>
-            {data.education.map((edu, i) => (
-              <div key={edu.id} className="p-4 bg-white/5 rounded-xl border border-white/5 space-y-3 relative">
-                <button onClick={() => setData({...data, education: data.education.filter(e => e.id !== edu.id)})} className="absolute top-3 left-3 text-gray-500 hover:text-red-400"><Trash2 className="w-4 h-4"/></button>
-                <input type="text" placeholder={t.university} className="w-full bg-transparent border-b border-gray-700 text-white px-2 py-1 focus:border-pink-500 outline-none font-bold" value={edu.university} onChange={e => { const newEdu = [...data.education]; newEdu[i].university = e.target.value; setData({...data, education: newEdu}); }} />
-                <div className="grid grid-cols-2 gap-3">
-                  <input type="text" placeholder={t.degree} className="w-full bg-transparent border-b border-gray-700 text-white px-2 py-1 focus:border-pink-500 outline-none" value={edu.degree} onChange={e => { const newEdu = [...data.education]; newEdu[i].degree = e.target.value; setData({...data, education: newEdu}); }} />
-                  <input type="text" placeholder={t.duration} className="w-full bg-transparent border-b border-gray-700 text-white px-2 py-1 focus:border-pink-500 outline-none text-sm" value={edu.duration} onChange={e => { const newEdu = [...data.education]; newEdu[i].duration = e.target.value; setData({...data, education: newEdu}); }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-xl font-black text-white flex items-center gap-2 border-b border-white/10 pb-2"><Code className="w-5 h-5 text-purple-400" /> {t.skills}</h3>
-            <textarea placeholder={t.skills_ph} rows={2} className="w-full bg-black/30 border border-gray-700 text-white rounded-xl px-4 py-3 focus:border-pink-500 resize-none" value={data.skills} onChange={e => setData({...data, skills: e.target.value})} />
+            <p className="text-xs text-purple-200/60 mb-1">{timeText}</p>
+            <p className="text-xs text-purple-200/40">{t.dontClose}</p>
           </div>
         </div>
+      )}
 
-        <div className="lg:col-span-7 flex flex-col items-center">
-          <button onClick={handleDownload} className="btn-glowing w-full max-w-2xl py-4 rounded-xl font-extrabold text-white text-lg flex justify-center gap-2 mb-6 no-print shadow-[0_0_20px_rgba(236,72,153,0.3)]">
-            <Download className="w-6 h-6" /> {t.download}
-          </button>
-
-          <div id="cv-preview" className="bg-white w-full max-w-2xl aspect-[1/1.414] shadow-2xl p-10 md:p-14 text-gray-900 overflow-hidden relative">
-            <div className="border-b-4 border-gray-900 pb-6 mb-8 text-center">
-              <h1 className="text-4xl font-black uppercase tracking-tight text-gray-900 mb-2">{data.name || t.name}</h1>
-              <h2 className="text-xl font-bold text-gray-500 uppercase tracking-widest mb-4">{data.title || t.job_title}</h2>
-              <div className="flex flex-wrap justify-center gap-4 text-sm font-semibold text-gray-600">
-                {data.email && <span dir="ltr">{data.email}</span>}
-                {data.email && data.phone && <span>•</span>}
-                {data.phone && <span dir="ltr">{data.phone}</span>}
-              </div>
+      {/* نافذة الأخطاء بدل alert المتصفح */}
+      {errorModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 text-center">
+          <div className="bg-[#170c2b] border border-red-500/30 p-10 rounded-3xl w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-8 h-8 text-red-400" />
             </div>
+            <h2 className="text-2xl font-bold text-white mb-4">{t.errorTitle}</h2>
+            <p className="text-purple-200/70 mb-8 leading-relaxed">{errorModal}</p>
+            <button onClick={() => setErrorModal('')} className="w-full bg-purple-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-purple-600/30 hover:bg-purple-500 transition-colors">
+              {t.okBtn}
+            </button>
+          </div>
+        </div>
+      )}
 
-            {/* معاينة النبذة إذا كتبها المستخدم أو أولدها الذكاء الاصطناعي */}
-            {data.summary && (
-              <div className="mb-8">
-                <p className="text-gray-700 font-medium leading-relaxed text-justify text-sm">
-                  {data.summary}
-                </p>
+      {/* نافذة تسجيل الدخول الاحترافية */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 text-center">
+          <div className="bg-[#170c2b] border border-purple-500/30 p-10 rounded-3xl w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <LogIn className="w-8 h-8 text-purple-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">{t.authTitle}</h2>
+            <p className="text-purple-200/70 mb-8 leading-relaxed">{t.authDesc}</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowAuthModal(false)} className="w-1/3 bg-white/5 text-white font-bold py-3.5 rounded-xl hover:bg-white/10 transition-colors">
+                {t.cancel}
+              </button>
+              <button onClick={() => router.push('/login')} className="w-2/3 bg-purple-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-purple-600/30 hover:bg-purple-500 transition-colors">
+                {t.loginBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة تجاوز الحد المسموح */}
+      {showLimitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 text-center">
+          <div className="bg-[#170c2b] border border-purple-500/30 p-10 rounded-3xl w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-fuchsia-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-8 h-8 text-fuchsia-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">{t.limitTitle}</h2>
+            <p className="text-purple-200/70 mb-8 leading-relaxed">{t.limitDesc}</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowLimitModal(false)} className="w-1/3 bg-white/5 text-white font-bold py-3.5 rounded-xl hover:bg-white/10 transition-colors">
+                {t.cancel}
+              </button>
+              <button onClick={() => router.push('/pricing')} className="w-2/3 bg-fuchsia-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-fuchsia-600/30 hover:bg-fuchsia-500 transition-colors flex justify-center items-center gap-2">
+                <Sparkles className="w-5 h-5" /> {t.upgradeBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showWizard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 text-right" dir={language === 'en' ? 'ltr' : 'rtl'}>
+          <div className="bg-white border border-gray-200 p-8 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-300">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">{t.wizardTitle}</h2>
+
+            {wizardError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm font-bold text-center">
+                {wizardError}
               </div>
             )}
 
-            {data.experience[0].company && (
-              <div className="mb-8">
-                <h3 className="text-lg font-black uppercase tracking-wider border-b border-gray-300 pb-2 mb-4 text-gray-900">{t.experience}</h3>
-                <div className="space-y-5">
-                  {data.experience.map((exp, i) => exp.company && (
-                    <div key={i} className="flex justify-between items-start">
-                      <div><h4 className="font-bold text-gray-900">{exp.role}</h4><p className="text-gray-600 font-semibold">{exp.company}</p></div>
-                      <span className="text-sm font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">{exp.duration}</span>
-                    </div>
-                  ))}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">{t.fullName}</label>
+                  <input type="text" className="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg px-4 py-2 focus:border-purple-500 outline-none" value={wizardData.name} onChange={e => setWizardData({...wizardData, name: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">{t.jobTitle} <span className="text-red-500">*</span></label>
+                  <input type="text" className="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg px-4 py-2 focus:border-purple-500 outline-none font-bold" value={wizardData.title} onChange={e => {setWizardData({...wizardData, title: e.target.value}); setWizardError('');}} />
                 </div>
               </div>
-            )}
 
-            {data.education[0].university && (
-              <div className="mb-8">
-                <h3 className="text-lg font-black uppercase tracking-wider border-b border-gray-300 pb-2 mb-4 text-gray-900">{t.education}</h3>
-                <div className="space-y-4">
-                  {data.education.map((edu, i) => edu.university && (
-                    <div key={i} className="flex justify-between items-start">
-                      <div><h4 className="font-bold text-gray-900">{edu.degree}</h4><p className="text-gray-600 font-semibold">{edu.university}</p></div>
-                      <span className="text-sm font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">{edu.duration}</span>
-                    </div>
-                  ))}
+              <div className="p-4 bg-purple-50/50 rounded-lg border border-purple-100 space-y-4">
+                <h3 className="text-sm font-bold text-purple-700 mb-2">{t.contactOptional}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">{t.email}</label>
+                    <input type="email" className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg px-3 py-2 text-sm focus:border-purple-500 outline-none" value={wizardData.email} onChange={e => setWizardData({...wizardData, email: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">{t.phone}</label>
+                    <input type="text" dir="ltr" className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg px-3 py-2 text-sm focus:border-purple-500 outline-none" value={wizardData.phone} onChange={e => setWizardData({...wizardData, phone: e.target.value})} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">{t.location}</label>
+                  <input type="text" className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg px-3 py-2 text-sm focus:border-purple-500 outline-none" value={wizardData.location} onChange={e => setWizardData({...wizardData, location: e.target.value})} />
                 </div>
               </div>
-            )}
 
-            {data.skills && (
               <div>
-                <h3 className="text-lg font-black uppercase tracking-wider border-b border-gray-300 pb-2 mb-4 text-gray-900">{t.skills}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {data.skills.split(',').map((skill, i) => (
-                    <span key={i} className="bg-gray-900 text-white font-bold text-sm px-3 py-1 rounded">{skill.trim()}</span>
+                <label className="block text-sm font-bold text-gray-700 mb-1">{t.notes}</label>
+                <textarea rows={2} className="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg px-4 py-2 focus:border-purple-500 outline-none resize-none" value={wizardData.notes} onChange={e => setWizardData({...wizardData, notes: e.target.value})} />
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setShowWizard(false)} className="w-1/3 bg-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-300 transition-colors">{t.cancel}</button>
+                <button onClick={handleGenerate} className="w-2/3 bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-purple-700 transition-colors">{t.generateSubmit}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === 'dashboard' && (
+        <div className="max-w-6xl mx-auto w-full text-white">
+          {cvHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+              <div className="text-center mb-12">
+                <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white">{t.dashboardTitle}</h1>
+                <p className="text-purple-100/80 text-sm md:text-base max-w-lg mx-auto">{t.dashboardSubtitle}</p>
+              </div>
+              <div className="flex flex-col items-center p-10 rounded-3xl bg-black/20 border border-white/10 backdrop-blur-md shadow-2xl">
+                <div className="w-16 h-16 bg-purple-500/30 rounded-2xl flex items-center justify-center mb-6">
+                  <FileText className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-xl font-bold mb-2 text-white">{t.noCvs}</h2>
+                <p className="text-purple-100/60 mb-8 text-sm">{t.createFirstDesc}</p>
+                <button onClick={handleNewCvClick} className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-lg shadow-fuchsia-600/30">
+                  <Plus className="w-5 h-5" /> {t.createFirstBtn}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="py-8">
+              <div className="flex justify-between items-end mb-10">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-black text-white mb-2">{t.yourResumes}</h1>
+                  <p className="text-purple-100/80 text-sm">{t.resumeCount.replace('{count}', cvHistory.length.toString())}</p>
+                </div>
+                <button onClick={handleNewCvClick} className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-lg shadow-fuchsia-600/30 hidden md:flex">
+                  <Plus className="w-5 h-5" /> {t.newCvBtn}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div onClick={handleNewCvClick} className="border-2 border-dashed border-white/30 rounded-3xl flex flex-col items-center justify-center p-8 cursor-pointer hover:bg-white/10 transition-colors min-h-[280px] bg-black/10">
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+                    <Plus className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-white font-bold">{t.newCvBtn}</span>
+                </div>
+
+                {cvHistory.map((record) => (
+                  <div key={record.id} className="border border-white/10 bg-black/20 backdrop-blur-sm rounded-3xl p-6 flex flex-col justify-between min-h-[280px] shadow-xl relative overflow-hidden group hover:border-fuchsia-500/50 transition-colors cursor-pointer" onClick={() => openOldCv(record)}>
+                    <div>
+                      <div className="flex justify-between items-start mb-6">
+                        <span className="bg-amber-500/20 text-amber-300 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" /> Minimal
+                        </span>
+                        <button onClick={(e) => handleDeleteCv(record.id, e)} className="text-white/30 hover:text-red-400 transition-colors bg-white/5 p-2 rounded-full">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-2 truncate">{record.data.name || 'سيرة ذاتية'}</h3>
+                      <h4 className="text-sm font-medium text-purple-200 mb-4">{record.data.title}</h4>
+                      <p className="text-xs text-purple-200/60 flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {record.date}
+                      </p>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/10">
+                      <button className="text-white/70 text-sm font-bold flex items-center gap-2 hover:text-white transition-colors">
+                        <Link className="w-4 h-4" /> {t.share}
+                      </button>
+                      <button className="text-fuchsia-400 text-sm font-bold flex items-center gap-2 hover:text-fuchsia-300 transition-colors">
+                         {t.edit} <Edit2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {view === 'editor' && (
+        <div className="max-w-[850px] mx-auto relative">
+          <div id="cv-preview" className="bg-white w-full shadow-2xl text-gray-900 min-h-[1122px] p-[10mm_15mm] md:p-[20mm_25mm]">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h1 className="text-3xl font-black text-black mb-1">{cvData.name}</h1>
+                <h2 className="text-lg font-bold text-gray-800 mb-3">{cvData.title}</h2>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-700 font-medium">
+                  {cvData.email && <span>{cvData.email}</span>}
+                  {cvData.phone && <span dir="ltr">{cvData.phone}</span>}
+                  {cvData.location && <span>{cvData.location}</span>}
+                </div>
+              </div>
+
+              <div className="relative w-24 h-24 rounded-lg overflow-hidden group">
+                {photoUrl ? (
+                  <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 border border-gray-300 flex items-center justify-center text-gray-500">
+                    <span className="text-sm font-bold">{t.photo}</span>
+                  </div>
+                )}
+                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer print:hidden">
+                  <Plus className="w-6 h-6 text-white" />
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                </label>
+              </div>
+            </div>
+
+            <hr className="border-gray-800 mb-6 border-2" />
+
+            {cvData.summary && (
+              <div className="mb-6">
+                <h3 className="text-lg font-black text-black mb-2 uppercase tracking-wide">{t.summary}</h3>
+                <p className="text-sm text-gray-900 leading-relaxed text-justify font-medium">{cvData.summary}</p>
+              </div>
+            )}
+
+            {cvData.experience && cvData.experience.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-black text-black border-b-2 border-gray-800 pb-1 mb-4 uppercase tracking-wide">{t.exp}</h3>
+                <div className="space-y-6">
+                  {cvData.experience.map((exp: any, i: number) => (
+                    <div key={i}>
+                      <div className="flex justify-between items-baseline mb-1">
+                        <h4 className="font-bold text-black text-base">{exp.role}</h4>
+                        <span className="text-sm font-bold text-gray-800 whitespace-nowrap">{exp.duration}</span>
+                      </div>
+                      <div className="text-sm text-gray-800 font-bold mb-3">{exp.company} {exp.location && ` • ${exp.location}`}</div>
+                      {exp.description && (
+                        <ul className="list-disc list-outside ml-5 mr-5 text-gray-900 text-sm leading-relaxed space-y-1.5 text-justify font-medium">
+                          {exp.description.split('\n').filter((p: string) => p.trim() !== '').map((p: string, idx: number) => (
+                            <li key={idx}>{p.replace(/^[-*]\s*/, '')}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {cvData.education && cvData.education.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-black text-black border-b-2 border-gray-800 pb-1 mb-4 uppercase tracking-wide">{t.edu}</h3>
+                <div className="space-y-4">
+                  {cvData.education.map((edu: any, i: number) => (
+                    <div key={i} className="flex justify-between items-baseline">
+                      <div>
+                        <h4 className="font-bold text-black text-sm">{edu.degree}</h4>
+                        <p className="text-sm font-medium text-gray-800 mt-1">{edu.university}</p>
+                      </div>
+                      <span className="text-sm font-bold text-gray-800 whitespace-nowrap">{edu.duration}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-8">
+              {cvData.skills && cvData.skills.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-black text-black border-b-2 border-gray-800 pb-1 mb-3 uppercase tracking-wide">{t.skills}</h3>
+                  <ul className="list-disc list-outside ml-5 mr-5 text-gray-900 text-sm leading-relaxed font-medium">
+                    {cvData.skills.map((skill: string, i: number) => <li key={i}>{skill}</li>)}
+                  </ul>
+                </div>
+              )}
+              {cvData.languages && cvData.languages.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-black text-black border-b-2 border-gray-800 pb-1 mb-3 uppercase tracking-wide">{t.langs}</h3>
+                  <div className="space-y-2">
+                    {cvData.languages.map((lang: any, i: number) => (
+                      <div key={i} className="flex justify-between text-sm font-bold text-gray-900">
+                        <span>{lang.name}</span>
+                        <span>{lang.level}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="w-full flex justify-center gap-4 mt-8 print:hidden flex-wrap">
+            <button onClick={() => setView('dashboard')} className="px-6 py-3 rounded-xl font-bold text-white bg-black/40 hover:bg-black/60 transition-colors flex items-center gap-2 backdrop-blur-md">
+              {t.back}
+            </button>
+            <button onClick={handleNewCvClick} className="px-6 py-3 rounded-xl font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-500 transition-colors flex items-center gap-2 shadow-lg">
+              <Sparkles className="w-5 h-5" /> {t.newCvBtn}
+            </button>
+            <button onClick={handleDownload} className="px-6 py-3 rounded-xl font-bold text-gray-900 bg-white hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-lg">
+              <Download className="w-5 h-5" /> {t.downloadBtn}
+            </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

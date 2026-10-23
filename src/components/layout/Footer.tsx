@@ -39,8 +39,18 @@ export default function Footer() {
         <div>
           <h3 className="font-bold text-xl text-slate-900 mb-6">{t('legal')}</h3>
           <ul className="space-y-4 text-slate-600 font-medium">
-            <li><Link href="#" className="hover:text-pink-600 transition-colors">{t('privacy_policy')}</Link></li>
-            <li><Link href="#" className="hover:text-purple-600 transition-colors">{t('terms_of_use')}</Link></li>
+            {/* تم تحديث الرابط هنا */}
+            <li>
+              <Link href="/privacy-policy" className="hover:text-pink-600 transition-colors">
+                {t('privacy_policy')}
+              </Link>
+            </li>
+            {/* تم تحديث الرابط هنا */}
+            <li>
+              <Link href="/terms-of-use" className="hover:text-purple-600 transition-colors">
+                {t('terms_of_use')}
+              </Link>
+            </li>
           </ul>
         </div>
 

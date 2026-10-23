@@ -1,17 +1,39 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "../components/LanguageProvider";
+import { createClient } from '@/utils/supabase/client';
 
 export default function Home() {
   const [commentName, setCommentName] = useState("");
   const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { t } = useLanguage();
+  const supabase = createClient();
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchComments();
+  }, []);
+
+  const fetchComments = async () => {
+    const { data } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
+    if (data) setComments(data);
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(t('alert_msg'));
+    if (!commentName || !commentText) return;
+    setIsSubmitting(true);
+    
+    await supabase.from('comments').insert([{ name: commentName, message: commentText }]);
+    
+    setCommentName("");
+    setCommentText("");
+    fetchComments();
+    setIsSubmitting(false);
   };
 
   return (
@@ -32,9 +54,10 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/10 z-0"></div>
 
         <div className="relative z-10 max-w-5xl mx-auto flex flex-col items-center mt-20">
-          <h1 className="text-6xl md:text-8xl font-black leading-tight mb-6 drop-shadow-lg tracking-tight">
+          {/* تم إضافة pb-4 و leading-relaxed لحل مشكلة قص الحروف العربية */}
+          <h1 className="text-6xl md:text-8xl font-black leading-relaxed pb-4 mb-6 drop-shadow-lg tracking-tight">
             {t('hero_t1')} <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-pink-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-pink-500 inline-block pb-4">
               {t('hero_t2')}
             </span>
           </h1>
@@ -44,7 +67,7 @@ export default function Home() {
       {/* القسم 2: التعريف والروابط */}
       <section className="py-20 px-6 max-w-7xl mx-auto relative z-10">
         <div className="glass-dark p-8 md:p-14 text-center">
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-10 text-white drop-shadow-md">
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-10 pb-2 leading-relaxed text-white drop-shadow-md">
             {t('s2_title')}
           </h2>
           
@@ -67,8 +90,8 @@ export default function Home() {
       {/* القسم 3: الأسئلة الشائعة */}
       <section className="py-24 px-6 max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-white drop-shadow-md">{t('faq_title')}</h2>
-          <p className="text-lg text-pink-300">{t('faq_sub')}</p>
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-4 pb-2 leading-relaxed text-white drop-shadow-md">{t('faq_title')}</h2>
+          <p className="text-lg text-pink-300 leading-relaxed pb-2">{t('faq_sub')}</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -80,7 +103,7 @@ export default function Home() {
           ].map((faq, idx) => (
             <div key={idx} className="glass-dark hover-glow-dark p-8 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-purple-500/30"></div>
-              <h3 className="font-extrabold text-xl mb-4 text-white flex items-start gap-3">
+              <h3 className="font-extrabold text-xl mb-4 pb-2 leading-relaxed text-white flex items-start gap-3">
                 <span className="text-pink-400 mt-1">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </span>
@@ -95,31 +118,32 @@ export default function Home() {
       </section>
 
       {/* القسم 4: آراء العملاء */}
-      <section className="py-20 px-6 max-w-7xl mx-auto relative z-10">
-        <h2 className="text-4xl font-extrabold mb-12 text-center text-white drop-shadow-md">{t('test_title')}</h2>
+      <section className="py-20 px-6 max-w-7xl mx-auto relative z-10" id="testimonials">
+        <h2 className="text-4xl font-extrabold mb-12 pb-2 leading-relaxed text-center text-white drop-shadow-md">{t('test_title') || "آراء العملاء"}</h2>
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           
-          <div className="space-y-6">
-            {[
-              { name: t('test1_name'), role: t('test1_role'), text: t('test1_text') },
-              { name: t('test2_name'), role: t('test2_role'), text: t('test2_text') }
-            ].map((review, idx) => (
-              <div key={idx} className="glass-dark p-8 border-r-4 border-r-pink-500">
-                <p className="text-gray-200 text-lg mb-6 font-medium">{review.text}</p>
+          {/* قائمة التعليقات الديناميكية */}
+          <div className="space-y-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+            {comments.length > 0 ? comments.map((review, idx) => (
+              <div key={idx} className="glass-dark p-8 border-r-4 border-r-pink-500 rounded-2xl">
+                <p className="text-gray-200 text-lg mb-6 font-medium leading-relaxed">{review.message}</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500"></div>
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex-shrink-0"></div>
                   <div>
                     <h4 className="font-bold text-white">{review.name}</h4>
-                    <span className="text-sm text-pink-400 font-bold">{review.role}</span>
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="glass-dark p-8 text-center rounded-2xl border border-white/10">
+                <p className="text-gray-400 font-medium">{t('no_comments') || "كن أول من يشاركنا رأيه!"}</p>
+              </div>
+            )}
           </div>
 
           {/* نموذج إضافة تعليق */}
-          <div className="glass-dark p-10 bg-[#1a0b2e]/60">
-            <h3 className="text-3xl font-bold mb-8 text-white">{t('leave_comment')}</h3>
+          <div className="glass-dark p-10 bg-[#1a0b2e]/60 rounded-3xl">
+            <h3 className="text-3xl font-bold mb-8 pb-2 leading-relaxed text-white">{t('leave_comment')}</h3>
             <form onSubmit={handleCommentSubmit} className="space-y-6">
               <div>
                 <label className="block text-gray-300 font-bold mb-3">{t('name_label')}</label>
@@ -143,8 +167,8 @@ export default function Home() {
                   placeholder={t('text_ph')}
                 ></textarea>
               </div>
-              <button type="submit" className="btn-glowing w-full py-4 rounded-xl text-lg font-bold">
-                {t('send_btn')}
+              <button disabled={isSubmitting} type="submit" className="btn-glowing w-full py-4 rounded-xl text-lg font-bold disabled:opacity-70">
+                {isSubmitting ? (t('sending') || "جاري الإرسال...") : (t('send_btn') || "إرسال التعليق")}
               </button>
             </form>
           </div>
