@@ -24,7 +24,7 @@ export async function createCheckoutSession(userId: string) {
         },
         productOptions: {
           // التوجيه التلقائي إلى صفحة الأدوات بعد إتمام الدفع بنجاح
-          redirectUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tools`,
+          redirectUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://my-tools-qhii7zgmu-elmutasem.vercel.app'}/tools`,
         }
       }
     );
