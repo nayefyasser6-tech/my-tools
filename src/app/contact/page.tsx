@@ -82,7 +82,7 @@ export default function ContactPage() {
 
       // 2. إرسال الـ Webhook في الخلفية (إذا فشل أو كان localhost لا يوقف نجاح الرسالة)
       try {
-        fetch('http://localhost:5678/webhook/38432fb3-e760-4768-aab3-4f6916aa9a47', {
+        fetch('https://thin-trains-move.loca.lt/webhook/38432fb3-e760-4768-aab3-4f6916aa9a47', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: name.trim(), email: email.trim(), message: message.trim() })
