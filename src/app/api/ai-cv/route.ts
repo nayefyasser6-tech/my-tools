@@ -101,18 +101,30 @@ export async function POST(req: Request) {
       ? 'AI failed to generate the CV. Please try again.'
       : 'لم يتمكن الذكاء الاصطناعي من توليد السيرة. حاول مجدداً.';
 
-    // 2) الحد المجاني: سيرة واحدة (لا ينطبق على الترجمة)
+    // 2) الحد المجاني: سيرة واحدة للمستخدمين المجانيين فقط (لا ينطبق على الترجمة)
+    //    أولاً نتحقق من خطة المستخدم في جدول profiles
     if (!isTranslation) {
-      const { count } = await supabase
-        .from('user_cvs')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan_type')
+        .eq('id', user.id)
+        .single();
 
-      if ((count ?? 0) >= 1) {
-        return NextResponse.json(
-          { error: 'تم الوصول للحد الأقصى', limitReached: true },
-          { status: 403 }
-        );
+      const isPro = profile?.plan_type === 'pro';
+
+      // إذا لم يكن المستخدم Pro، نطبق الحد الأقصى (سيرة واحدة)
+      if (!isPro) {
+        const { count } = await supabase
+          .from('user_cvs')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if ((count ?? 0) >= 1) {
+          return NextResponse.json(
+            { error: 'تم الوصول للحد الأقصى', limitReached: true },
+            { status: 403 }
+          );
+        }
       }
     }
 
