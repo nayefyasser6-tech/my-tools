@@ -120,7 +120,6 @@ export default function PdfManagerPage() {
     }
 
     try {
-      // التحقق من خطة المستخدم أولاً
       const { data: profile } = await supabase
         .from('profiles')
         .select('plan_type')
@@ -260,7 +259,6 @@ export default function PdfManagerPage() {
     }
   };
 
-  // معالجة معاينة الملف بشكل آمن ومضمون لمنع ظهور شاشة بيضاء
   const openHistoryPdf = (item: any) => {
     if (!item.fileData) {
       alert("عذراً، هذا الملف القديم تم إنشاؤه مسبقاً قبل تفعيل تخزين البيانات ولا يحتوي على نسخة معاينة. يرجى دمج ملف جديد لتعمل المعاينة بشكل فوري.");
@@ -323,7 +321,7 @@ export default function PdfManagerPage() {
 
           <div className="glass-dark p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
             
-            {usageCount >= 3 && (
+            {usageCount >= 3 && !isPro && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 text-center">
                  <div className="bg-gray-900 border border-pink-500/30 p-8 rounded-2xl max-w-md w-full shadow-2xl">
                     <AlertCircle className="w-16 h-16 text-pink-500 mx-auto mb-4" />
@@ -345,7 +343,7 @@ export default function PdfManagerPage() {
                 multiple 
                 accept="application/pdf"
                 onChange={handleFileChange}
-                disabled={usageCount >= 3}
+                disabled={usageCount >= 3 && !isPro}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
               />
               <UploadCloud className="w-16 h-16 mx-auto text-gray-400 mb-4" />
@@ -377,7 +375,7 @@ export default function PdfManagerPage() {
                   {!mergedPdfUrl ? (
                     <button 
                       onClick={mergePdfs}
-                      disabled={isProcessing || files.length < 2 || usageCount >= 3}
+                      disabled={isProcessing || files.length < 2 || (usageCount >= 3 && !isPro)}
                       className="btn-glowing w-full py-4 rounded-xl font-extrabold text-white text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : t.mergeNow}
@@ -398,7 +396,6 @@ export default function PdfManagerPage() {
           </div>
         </div>
 
-        {/* القسم الجانبي (بدون زر التصفير نهائياً) */}
         <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-6 mt-16 lg:mt-0">
           
           <div className="glass-dark p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
@@ -411,7 +408,7 @@ export default function PdfManagerPage() {
                  style={{ width: `${Math.min((usageCount / 3) * 100, 100)}%` }}
                ></div>
              </div>
-             <p className="text-xs text-right text-gray-500 font-medium">{usageCount} / 3</p>
+             <p className="text-xs text-right text-gray-500 font-medium">{usageCount} / {isPro ? '∞' : '3'}</p>
           </div>
 
           <div className="glass-dark p-6 rounded-3xl border border-white/10 shadow-2xl flex-1 max-h-[500px] overflow-hidden flex flex-col relative">
