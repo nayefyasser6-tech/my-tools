@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/client';
 
 export default function CvMakerPage() {
   const [isPro, setIsPro] = useState<boolean>(false);
-const [usageCount, setUsageCount] = useState<number>(0);
+  const [usageCount, setUsageCount] = useState<number>(0);
   const { language } = useLanguage();
   const router = useRouter();
   const supabase = createClient();
@@ -147,8 +147,6 @@ const [usageCount, setUsageCount] = useState<number>(0);
  
   // @ts-ignore
   const t = translations[language] || translations.ar;
-
-  
 
   const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -389,6 +387,23 @@ const [usageCount, setUsageCount] = useState<number>(0);
     setPhotoUrl(record.photo);
     setView('editor');
   };
+
+  // ==========================================
+  // التعديلات الجديدة هنا: تعريف المتغيرات الناقصة للتحميل
+  // ==========================================
+  const loadingSteps = t.loadSteps || [
+    "جاري تحليل المسار المهني...",
+    "جاري صياغة الملخص والخبرات...",
+    "تنظيم المهارات والتعليم...",
+    "اللمسات الأخيرة لتجهيز سيرتك الذاتية..."
+  ];
+  const stepIndex = Math.min(Math.floor(elapsed / 5), loadingSteps.length - 1);
+  const progress = Math.min((elapsed / 20) * 100, 100);
+  const timeText = elapsed < 15 
+    ? (t.timeUsual || 'عادةً تستغرق أقل من 20 ثانية • {s} ث').replace('{s}', elapsed.toString())
+    : (t.timeAlmost || 'أوشكنا على الانتهاء، شكراً لصبرك • {s} ث').replace('{s}', elapsed.toString());
+  // ==========================================
+
   return (
     <div className="min-h-screen pt-28 pb-20 px-4 md:px-8 bg-gradient-to-br from-[#2e1065] via-[#4a044e] to-[#2e1065]" dir={language === 'en' ? 'ltr' : 'rtl'}>
 

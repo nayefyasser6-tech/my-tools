@@ -3,30 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
 import { useRouter } from 'next/navigation';
-import { UploadCloud, Loader2, Download, History, AlertCircle, Eye, LogIn, Sliders, Image as ImageIcon, Palette, Wand2 } from 'lucide-react';
+import { UploadCloud, Loader2, Download, History, AlertCircle, Eye, LogIn, Sliders } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-
-const presetBackgrounds = [
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
-  "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80",
-  "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&q=80",
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80",
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80",
-  "https://images.unsplash.com/photo-1511884642898-4c92249e20b6?w=600&q=80",
-  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80",
-  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=600&q=80",
-  "https://images.unsplash.com/photo-1434725039720-aaad6dd32dfe?w=600&q=80",
-  "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=600&q=80",
-  "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600&q=80",
-  "https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=600&q=80",
-  "https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=600&q=80",
-  "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600&q=80",
-  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80",
-  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80",
-  "https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=600&q=80",
-  "https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=600&q=80",
-  "https://images.unsplash.com/photo-1510784722466-f2aa9c52fff6?w=600&q=80"
-];
 
 export default function RemoveBgPage() {
   const { language } = useLanguage();
@@ -36,7 +14,7 @@ export default function RemoveBgPage() {
   const translations = {
     ar: {
       title: "إزالة الخلفية وتعديل الصور",
-      desc: "أداة ذكية لإزالة الخلفية عبر Remove.bg وتغييرها بأجمل الخلفيات الطبيعية.",
+      desc: "أداة ذكية لإزالة الخلفية عبر Remove.bg وتعديل الصورة.",
       dragDrop: "اختر صورة وسيبدأ عزل الخلفية بالكامل",
       historyTitle: "سجل العمليات السابقة",
       noHistory: "لا يوجد سجل عمليات حتى الآن.",
@@ -50,10 +28,7 @@ export default function RemoveBgPage() {
       authDesc: "يرجى تسجيل الدخول بحسابك لتتمكن من استخدام الأداة وحفظ أعمالك في السجل.",
       loginBtn: "تسجيل الدخول",
       cancel: "إلغاء",
-      tabPhoto: "خلفيات",
-      tabColor: "لون",
-      tabBlur: "تمويه",
-      tabEdit: "تعديل",
+      tabEdit: "أدوات التعديل",
       scale: "الحجم (تكبير/تصغير)",
       moveX: "أفقي (يمين/يسار)",
       moveY: "عمودي (أعلى/أسفل)",
@@ -61,11 +36,8 @@ export default function RemoveBgPage() {
       processNow: "إزالة الخلفية الآن",
       download: "تحميل الصورة",
       processing: "جاري إزالة الخلفية عبر Remove.bg...",
-      // الكلمات المضافة لإصلاح الترجمة
       workspace: "مساحة العمل",
       chooseImage: "اختر صورة",
-      transparent: "شفاف",
-      presetBgTitle: "اختر خلفية طبيعية جاهزة (20 خلفية)"
     },
     en: {
       title: "Background Remover & Editor",
@@ -83,10 +55,7 @@ export default function RemoveBgPage() {
       authDesc: "Please log in to your account to use the tool and save history.",
       loginBtn: "Log In",
       cancel: "Cancel",
-      tabPhoto: "Scenery",
-      tabColor: "Color",
-      tabBlur: "Blur",
-      tabEdit: "Edit",
+      tabEdit: "Adjustments",
       scale: "Scale",
       moveX: "Horizontal",
       moveY: "Vertical",
@@ -94,11 +63,8 @@ export default function RemoveBgPage() {
       processNow: "Remove Background Now",
       download: "Download Image",
       processing: "Processing with API...",
-      // Added missing words
       workspace: "Workspace",
       chooseImage: "Choose Image",
-      transparent: "Transparent",
-      presetBgTitle: "Choose a natural background (20 presets)"
     },
     tr: {
       title: "Arka Plan Silici ve Editör",
@@ -116,10 +82,7 @@ export default function RemoveBgPage() {
       authDesc: "Aracı kullanmak ve geçmişi kaydetmek için giriş yapın.",
       loginBtn: "Giriş Yap",
       cancel: "İptal",
-      tabPhoto: "Manzara",
-      tabColor: "Renk",
-      tabBlur: "Bulanıklık",
-      tabEdit: "Düzenle",
+      tabEdit: "Düzenleme Araçları",
       scale: "Boyut",
       moveX: "Yatay",
       moveY: "Dikey",
@@ -127,11 +90,8 @@ export default function RemoveBgPage() {
       processNow: "Arka Planı Şimdi Sil",
       download: "Görseli İndir",
       processing: "İşleniyor...",
-      // Added missing words
       workspace: "Çalışma Alanı",
       chooseImage: "Görsel Seç",
-      transparent: "Şeffaf",
-      presetBgTitle: "Doğal bir arka plan seçin (20 hazır)"
     }
   };
 
@@ -144,12 +104,7 @@ export default function RemoveBgPage() {
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'photo' | 'color' | 'blur' | 'edit'>('photo');
-  const [bgType, setBgType] = useState<'transparent' | 'color' | 'preset'>('transparent');
-  const [selectedColor, setSelectedColor] = useState<string>('#ffffff');
-  const [selectedPresetBg, setSelectedPresetBg] = useState<string | null>(null);
-  const [blurAmount, setBlurAmount] = useState<number>(0);
-
+  // تم تبسيط أدوات التعديل وإزالة الخلفيات
   const [scale, setScale] = useState<number>(1);
   const [posX, setPosX] = useState<number>(0);
   const [posY, setPosY] = useState<number>(0);
@@ -159,11 +114,6 @@ export default function RemoveBgPage() {
   const [usageCount, setUsageCount] = useState<number>(0);
   const [history, setHistory] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
-
-  const presetColors = [
-    '#ffffff', '#f3e8ff', '#fce7f3', '#fee2e2', '#fef3c7', '#dcfce7', '#e0f2fe', '#e0e7ff',
-    '#a855f7', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#1e1b4b', '#0f172a'
-  ];
 
   const isValidUUID = (id: string) => {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -286,7 +236,6 @@ export default function RemoveBgPage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setProcessedImage(url);
-      setActiveTab('edit');
 
       const base64Data = await new Promise<string>((resolve) => {
         const reader = new FileReader();
@@ -344,7 +293,7 @@ export default function RemoveBgPage() {
     );
   }
 
- return (
+  return (
     <div className="min-h-screen py-32 px-6 relative z-10" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       
       {showAuthModal && (
@@ -396,95 +345,29 @@ export default function RemoveBgPage() {
           <div className="w-full lg:w-[320px] flex flex-col border-b lg:border-b-0 lg:border-l border-white/10 pl-0 lg:pl-6 pb-6 lg:pb-0">
             
             <div className="flex border-b border-white/10 mb-6">
-              <button 
-                onClick={() => setActiveTab('photo')} 
-                className={`flex-1 pb-3 text-xs font-bold flex items-center justify-center gap-1 ${activeTab === 'photo' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-gray-400'}`}
-              >
-                <ImageIcon className="w-4 h-4" /> {t.tabPhoto}
-              </button>
-              <button 
-                onClick={() => setActiveTab('color')} 
-                className={`flex-1 pb-3 text-xs font-bold flex items-center justify-center gap-1 ${activeTab === 'color' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-gray-400'}`}
-              >
-                <Palette className="w-4 h-4" /> {t.tabColor}
-              </button>
-              <button 
-                onClick={() => setActiveTab('blur')} 
-                className={`flex-1 pb-3 text-xs font-bold flex items-center justify-center gap-1 ${activeTab === 'blur' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-gray-400'}`}
-              >
-                <Wand2 className="w-4 h-4" /> {t.tabBlur}
-              </button>
-              <button 
-                onClick={() => {
-                  if (!processedImage) return alert(t.unlockFirst);
-                  setActiveTab('edit');
-                }} 
-                className={`flex-1 pb-3 text-xs font-bold flex items-center justify-center gap-1 ${activeTab === 'edit' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-gray-400'}`}
-              >
+              <div className="flex-1 pb-3 text-sm font-bold flex items-center justify-center gap-2 text-pink-400 border-b-2 border-pink-400">
                 <Sliders className="w-4 h-4" /> {t.tabEdit}
-              </button>
+              </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-1 max-h-[400px] custom-scrollbar">
-              {activeTab === 'photo' && (
-                <div className="space-y-3">
-                  <p className="text-xs text-gray-400 font-bold mb-2">{t.presetBgTitle}</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    <div onClick={() => { setBgType('transparent'); setSelectedPresetBg(null); }} className="aspect-square bg-white/5 border border-white/10 rounded-lg cursor-pointer flex items-center justify-center text-[10px] text-gray-300 checkered-bg" title={t.transparent}>{t.transparent}</div>
-                    {presetBackgrounds.map((bgUrl, idx) => (
-                      <div 
-                        key={idx} 
-                        onClick={() => { setBgType('preset'); setSelectedPresetBg(bgUrl); }}
-                        className={`aspect-square rounded-lg cursor-pointer overflow-hidden border-2 transition-all ${selectedPresetBg === bgUrl ? 'border-pink-500 scale-105' : 'border-transparent hover:border-white/30'}`}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={bgUrl} alt={`bg-${idx}`} className="w-full h-full object-cover" />
-                      </div>
-                    ))}
+            <div className="flex-1 overflow-y-auto pr-1 max-h-[400px] custom-scrollbar space-y-6">
+              {!processedImage ? (
+                <p className="text-xs text-pink-400 text-center py-6 font-bold">{t.unlockFirst}</p>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-2">{t.scale} ({scale.toFixed(1)}x)</label>
+                    <input type="range" min="0.5" max="2.5" step="0.1" value={scale} onChange={(e) => setScale(Number(e.target.value))} className="w-full accent-pink-500" />
                   </div>
-                </div>
-              )}
-
-              {activeTab === 'color' && (
-                <div className="space-y-4">
-                  <p className="text-xs text-gray-400 font-bold mb-2">{t.tabColor}:</p>
-                  <div className="grid grid-cols-4 gap-2 mb-4">
-                    {presetColors.map((c, idx) => (
-                      <div key={idx} onClick={() => { setBgType('color'); setSelectedPresetBg(null); setSelectedColor(c); }} style={{ backgroundColor: c }} className="aspect-square rounded-lg cursor-pointer border border-white/25 hover:scale-105 transition-transform"></div>
-                    ))}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-2">{t.moveX}</label>
+                    <input type="range" min="-150" max="150" value={posX} onChange={(e) => setPosX(Number(e.target.value))} className="w-full accent-pink-500" />
                   </div>
-                  <input type="color" value={selectedColor} onChange={(e) => { setBgType('color'); setSelectedPresetBg(null); setSelectedColor(e.target.value); }} className="w-full h-10 rounded cursor-pointer bg-transparent border-0" />
-                </div>
-              )}
-
-              {activeTab === 'blur' && (
-                <div className="space-y-4">
-                  <p className="text-xs text-gray-400 font-bold mb-2">{t.tabBlur}:</p>
-                  <input type="range" min="0" max="30" value={blurAmount} onChange={(e) => setBlurAmount(Number(e.target.value))} className="w-full accent-pink-500" />
-                </div>
-              )}
-
-              {activeTab === 'edit' && (
-                <div className="space-y-6">
-                  {!processedImage ? (
-                    <p className="text-xs text-pink-400 text-center py-6 font-bold">{t.unlockFirst}</p>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-300 mb-2">{t.scale} ({scale.toFixed(1)}x)</label>
-                        <input type="range" min="0.5" max="2.5" step="0.1" value={scale} onChange={(e) => setScale(Number(e.target.value))} className="w-full accent-pink-500" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-300 mb-2">{t.moveX}</label>
-                        <input type="range" min="-150" max="150" value={posX} onChange={(e) => setPosX(Number(e.target.value))} className="w-full accent-pink-500" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-300 mb-2">{t.moveY}</label>
-                        <input type="range" min="-150" max="150" value={posY} onChange={(e) => setPosY(Number(e.target.value))} className="w-full accent-pink-500" />
-                      </div>
-                    </>
-                  )}
-                </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-2">{t.moveY}</label>
+                    <input type="range" min="-150" max="150" value={posY} onChange={(e) => setPosY(Number(e.target.value))} className="w-full accent-pink-500" />
+                  </div>
+                </>
               )}
             </div>
 
@@ -510,6 +393,7 @@ export default function RemoveBgPage() {
             </div>
 
           </div>
+          
           <div className="flex-1 flex flex-col items-center justify-center relative bg-black/40 rounded-2xl border border-white/5 p-6 overflow-hidden checkered-bg">
             {!selectedImage ? (
               <div className="text-center">
@@ -520,19 +404,11 @@ export default function RemoveBgPage() {
                 <p className="text-sm text-gray-400 mb-6">{t.dragDrop}</p>
                 <label className="btn-glowing px-6 py-3 rounded-xl font-bold text-white cursor-pointer inline-block text-sm">
                   {t.chooseImage}
-                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={usageCount >= 2 && !isPro} />                </label>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={usageCount >= 2 && !isPro} />
+                </label>
               </div>
             ) : (
-              <div 
-                className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-xl"
-                style={{
-                  backgroundColor: bgType === 'color' ? selectedColor : 'transparent',
-                  backgroundImage: bgType === 'preset' && selectedPresetBg ? `url(${selectedPresetBg})` : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  filter: `blur(${blurAmount}px)`
-                }}
-              >
+              <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
                 {isProcessing && (
                   <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
                     <Loader2 className="w-10 h-10 text-pink-500 animate-spin mb-3" />

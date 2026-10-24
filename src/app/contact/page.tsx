@@ -66,21 +66,32 @@ export default function ContactPage() {
     setStatus("loading");
 
     try {
+      // 1. الحفظ الأساسي في Supabase أولاً وضمان نجاحه
       const { error: dbError } = await supabase
         .from('contact_messages')
-        .insert([{ name: name, email: email, message: message }]);
+        .insert([{ 
+          name: name.trim(), 
+          email: email.trim(), 
+          message: message.trim() 
+        }]);
 
       if (dbError) {
         console.error("Database Error:", dbError);
         throw new Error("حدث خطأ أثناء الحفظ في قاعدة البيانات");
       }
 
-      await fetch('http://localhost:5678/webhook/38432fb3-e760-4768-aab3-4f6916aa9a47', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message })
-      });
+      // 2. إرسال الـ Webhook في الخلفية (إذا فشل أو كان localhost لا يوقف نجاح الرسالة)
+      try {
+        fetch('http://localhost:5678/webhook/38432fb3-e760-4768-aab3-4f6916aa9a47', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name.trim(), email: email.trim(), message: message.trim() })
+        }).catch(err => console.log("Webhook background error ignored:", err));
+      } catch (webhookErr) {
+        console.log("Webhook skipped");
+      }
       
+      // 3. نجاح العملية وتفريغ الحقول فوراً
       setStatus("success");
       setName("");
       setEmail("");
@@ -118,7 +129,6 @@ export default function ContactPage() {
             </div>
           )}
 
-          {/* إضافة leading-relaxed و pb-4 لحل مشكلة قص الحروف العربية */}
           <h1 className="text-4xl md:text-5xl font-black mb-10 text-center text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-pink-500 leading-relaxed pb-4">
             {t.contact_title}
           </h1>
