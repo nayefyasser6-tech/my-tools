@@ -144,12 +144,11 @@ const [usageCount, setUsageCount] = useState<number>(0);
       dontClose: 'Lütfen bu sayfayı kapatmayın'
     }
   };
-  // @ts-ignore
+ 
   // @ts-ignore
   const t = translations[language] || translations.ar;
 
-  const [isPro, setIsPro] = useState<boolean>(false);
-  const [usageCount, setUsageCount] = useState<number>(0);
+  
 
   const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
