@@ -41,6 +41,8 @@ export async function createCheckoutSession(_userId?: string) {
     lemonSqueezySetup({ apiKey });
 
     const siteUrl = await getSiteUrl();
+    // سطر للتشخيص: يظهر في Vercel > Logs ليؤكد الرابط الذي سيُحوَّل إليه المستخدم بعد الدفع
+    console.log("[checkout] redirect will be:", `${siteUrl}/tools`);
 
     const { data, error } = await createCheckout(storeId, variantId, {
       checkoutData: {
