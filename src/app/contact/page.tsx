@@ -80,16 +80,22 @@ export default function ContactPage() {
         throw new Error("حدث خطأ أثناء الحفظ في قاعدة البيانات");
       }
 
-      // 2. إرسال الـ Webhook في الخلفية (إذا فشل أو كان localhost لا يوقف نجاح الرسالة)
-      try {
-        fetch('https://ninety-guests-read.loca.lt/webhook/38432fb3-e760-4768-aab3-4f6916aa9a47', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: name.trim(), email: email.trim(), message: message.trim() })
-        }).catch(err => console.log("Webhook background error ignored:", err));
-      } catch (webhookErr) {
-        console.log("Webhook skipped");
-      }
+      // 2. إرسال الرسالة إلى تيليجرام مباشرة من السحابة
+      const BOT_TOKEN = '8509593443:AAECj2t_R1kwUwVAC2SkoHL0ba3nfAyKI_g';
+      const CHAT_ID = '8883092309';
+
+      const telegramText = `📬 رسالة جديدة من موقعك:\n\n👤 الاسم: ${name.trim()}\n📧 البريد: ${email.trim()}\n💬 الرسالة: ${message.trim()}`;
+
+      const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+      await fetch(telegramUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: telegramText,
+        }),
+      });
       
       // 3. نجاح العملية وتفريغ الحقول فوراً
       setStatus("success");
