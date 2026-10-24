@@ -1,23 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
 import { lemonSqueezySetup, createCheckout } from "@lemonsqueezy/lemonsqueezy.js";
 import { createClient } from "@/utils/supabase/server";
 
-// رابط الموقع الحقيقي: من متغير البيئة إن وُجد (يُفضّل ضبطه في Vercel)، وإلا من الطلب نفسه.
-// هكذا يعمل تلقائياً على جهازك (localhost) وعلى Vercel بدون تعديل الكود.
-async function getSiteUrl() {
-  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL;
-  if (fromEnv) return fromEnv.replace(/\/+$/, "");
-
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
-
-// ملاحظة: بقي المعامل userId اختيارياً حتى لا تتعطل الاستدعاءات الحالية،
-// لكننا لا نثق به. المستخدم الحقيقي يُؤخذ من جلسته على السيرفر.
 export async function createCheckoutSession(_userId?: string) {
   try {
     // 1) التحقق من المستخدم من الجلسة (وليس من المتصفح)
@@ -40,10 +25,6 @@ export async function createCheckoutSession(_userId?: string) {
 
     lemonSqueezySetup({ apiKey });
 
-    const siteUrl = await getSiteUrl();
-    // سطر للتشخيص: يظهر في Vercel > Logs ليؤكد الرابط الذي سيُحوَّل إليه المستخدم بعد الدفع
-    console.log("[checkout] redirect will be:", `${siteUrl}/tools`);
-
     const { data, error } = await createCheckout(storeId, variantId, {
       checkoutData: {
         // تعبئة البريد تلقائياً في صفحة الدفع
@@ -52,8 +33,8 @@ export async function createCheckoutSession(_userId?: string) {
         custom: { user_id: user.id },
       },
       productOptions: {
-        // الرجوع إلى موقعك الحقيقي بعد الدفع
-        redirectUrl: `${siteUrl}/tools`,
+        // الرجوع إلى موقعك الحقيقي الثابت بعد الدفع
+        redirectUrl: "https://my-tools-five-nu.vercel.app/tools",
       },
     });
 
