@@ -93,7 +93,7 @@ export default function PdfManagerPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
-
+  const [isPro, setIsPro] = useState<boolean>(false);
   const [activeUser, setActiveUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [usageCount, setUsageCount] = useState<number>(0);
@@ -120,6 +120,17 @@ export default function PdfManagerPage() {
     }
 
     try {
+      // التحقق من خطة المستخدم أولاً
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan_type')
+        .eq('id', user.id)
+        .single();
+        
+      if (profile?.plan_type === 'pro') {
+        setIsPro(true);
+      }
+
       const { data: historyData, error: historyErr } = await supabase
         .from('merge_history')
         .select('*')
@@ -189,7 +200,7 @@ export default function PdfManagerPage() {
       return;
     }
     if (files.length < 2) return alert(t.minFilesAlert);
-    if (usageCount >= 3) return;
+    if (usageCount >= 3 && !isPro) return;
 
     setIsProcessing(true);
 

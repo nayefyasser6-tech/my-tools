@@ -494,8 +494,7 @@ export default function RemoveBgPage() {
                 <p className="text-sm text-gray-400 mb-6">{t.dragDrop}</p>
                 <label className="btn-glowing px-6 py-3 rounded-xl font-bold text-white cursor-pointer inline-block text-sm">
                   اختر صورة
-                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                </label>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={usageCount >= 3 && !isPro} />                </label>
               </div>
             ) : (
               <div 

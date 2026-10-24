@@ -622,7 +622,7 @@ export default function CvMakerPage() {
                 )}
                 <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer print:hidden">
                   <Plus className="w-6 h-6 text-white" />
-                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={usageCount >= 1 && !isPro} />
                 </label>
               </div>
             </div>
