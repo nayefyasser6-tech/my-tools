@@ -10,7 +10,6 @@ const presetBackgrounds = [
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
   "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80",
   "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&q=80",
-  
   "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80",
   "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80",
   "https://images.unsplash.com/photo-1511884642898-4c92249e20b6?w=600&q=80",
@@ -61,7 +60,12 @@ export default function RemoveBgPage() {
       unlockFirst: "أزل الخلفية أولاً لتفعيل التعديل",
       processNow: "إزالة الخلفية الآن",
       download: "تحميل الصورة",
-      processing: "جاري إزالة الخلفية عبر Remove.bg..."
+      processing: "جاري إزالة الخلفية عبر Remove.bg...",
+      // الكلمات المضافة لإصلاح الترجمة
+      workspace: "مساحة العمل",
+      chooseImage: "اختر صورة",
+      transparent: "شفاف",
+      presetBgTitle: "اختر خلفية طبيعية جاهزة (20 خلفية)"
     },
     en: {
       title: "Background Remover & Editor",
@@ -89,7 +93,12 @@ export default function RemoveBgPage() {
       unlockFirst: "Remove background first to enable editing",
       processNow: "Remove Background Now",
       download: "Download Image",
-      processing: "Processing with API..."
+      processing: "Processing with API...",
+      // Added missing words
+      workspace: "Workspace",
+      chooseImage: "Choose Image",
+      transparent: "Transparent",
+      presetBgTitle: "Choose a natural background (20 presets)"
     },
     tr: {
       title: "Arka Plan Silici ve Editör",
@@ -117,13 +126,19 @@ export default function RemoveBgPage() {
       unlockFirst: "Düzenlemeyi etkinleştirmek için önce arka planı kaldırın",
       processNow: "Arka Planı Şimdi Sil",
       download: "Görseli İndir",
-      processing: "İşleniyor..."
+      processing: "İşleniyor...",
+      // Added missing words
+      workspace: "Çalışma Alanı",
+      chooseImage: "Görsel Seç",
+      transparent: "Şeffaf",
+      presetBgTitle: "Doğal bir arka plan seçin (20 hazır)"
     }
   };
 
   // @ts-ignore
   const t = translations[language] || translations.ar;
 
+  const [isPro, setIsPro] = useState<boolean>(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
@@ -157,10 +172,21 @@ export default function RemoveBgPage() {
   const fetchFromSupabase = async (user: any) => {
     if (!user || !isValidUUID(user.id)) {
       setIsLoadingData(false);
+      setIsPro(false);
       return;
     }
 
     try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan_type')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.plan_type === 'pro') {
+        setIsPro(true);
+      }
+
       const { data: historyData, error: historyErr } = await supabase
         .from('remove_bg_history')
         .select('*')
@@ -221,14 +247,15 @@ export default function RemoveBgPage() {
     }
   };
 
-  // الاتصال المباشر بـ Remove.bg API مع إرسال المفتاح من ملف البيئة بأمان
   const processBackgroundRemoval = async () => {
     if (!activeUser || !isValidUUID(activeUser.id)) {
       setShowAuthModal(true);
       return;
     }
     if (!selectedFile) return;
-    if (usageCount >= 2) return;
+    
+    // إيقاف المعالجة إذا تجاوز الحد المجاني ولم يكن الحساب Pro
+    if (usageCount >= 2 && !isPro) return;
 
     setIsProcessing(true);
 
@@ -317,7 +344,7 @@ export default function RemoveBgPage() {
     );
   }
 
-  return (
+ return (
     <div className="min-h-screen py-32 px-6 relative z-10" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       
       {showAuthModal && (
@@ -350,7 +377,7 @@ export default function RemoveBgPage() {
         
         <div className="flex-1 flex flex-col lg:flex-row gap-6 glass-dark p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden min-h-[620px]">
           
-          {usageCount >= 2 && (
+          {usageCount >= 2 && !isPro && (
             <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 text-center">
                <div className="bg-gray-900 border border-pink-500/30 p-8 rounded-2xl max-w-md w-full shadow-2xl">
                   <AlertCircle className="w-16 h-16 text-pink-500 mx-auto mb-4" />
@@ -401,9 +428,9 @@ export default function RemoveBgPage() {
             <div className="flex-1 overflow-y-auto pr-1 max-h-[400px] custom-scrollbar">
               {activeTab === 'photo' && (
                 <div className="space-y-3">
-                  <p className="text-xs text-gray-400 font-bold mb-2">اختر خلفية طبيعية جاهزة (20 خلفية):</p>
+                  <p className="text-xs text-gray-400 font-bold mb-2">{t.presetBgTitle}</p>
                   <div className="grid grid-cols-4 gap-2">
-                    <div onClick={() => { setBgType('transparent'); setSelectedPresetBg(null); }} className="aspect-square bg-white/5 border border-white/10 rounded-lg cursor-pointer flex items-center justify-center text-[10px] text-gray-300 checkered-bg" title="شفاف">شفاف</div>
+                    <div onClick={() => { setBgType('transparent'); setSelectedPresetBg(null); }} className="aspect-square bg-white/5 border border-white/10 rounded-lg cursor-pointer flex items-center justify-center text-[10px] text-gray-300 checkered-bg" title={t.transparent}>{t.transparent}</div>
                     {presetBackgrounds.map((bgUrl, idx) => (
                       <div 
                         key={idx} 
@@ -420,7 +447,7 @@ export default function RemoveBgPage() {
 
               {activeTab === 'color' && (
                 <div className="space-y-4">
-                  <p className="text-xs text-gray-400 font-bold mb-2">اختر لون الخلفية:</p>
+                  <p className="text-xs text-gray-400 font-bold mb-2">{t.tabColor}:</p>
                   <div className="grid grid-cols-4 gap-2 mb-4">
                     {presetColors.map((c, idx) => (
                       <div key={idx} onClick={() => { setBgType('color'); setSelectedPresetBg(null); setSelectedColor(c); }} style={{ backgroundColor: c }} className="aspect-square rounded-lg cursor-pointer border border-white/25 hover:scale-105 transition-transform"></div>
@@ -432,7 +459,7 @@ export default function RemoveBgPage() {
 
               {activeTab === 'blur' && (
                 <div className="space-y-4">
-                  <p className="text-xs text-gray-400 font-bold mb-2">درجة التمويه (Blur):</p>
+                  <p className="text-xs text-gray-400 font-bold mb-2">{t.tabBlur}:</p>
                   <input type="range" min="0" max="30" value={blurAmount} onChange={(e) => setBlurAmount(Number(e.target.value))} className="w-full accent-pink-500" />
                 </div>
               )}
@@ -465,7 +492,7 @@ export default function RemoveBgPage() {
               {!processedImage ? (
                 <button
                   onClick={processBackgroundRemoval}
-                  disabled={!selectedImage || isProcessing || usageCount >= 2}
+                  disabled={!selectedImage || isProcessing || (usageCount >= 2 && !isPro)}
                   className="btn-glowing w-full py-3 rounded-xl font-extrabold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : t.processNow}
@@ -483,18 +510,17 @@ export default function RemoveBgPage() {
             </div>
 
           </div>
-
           <div className="flex-1 flex flex-col items-center justify-center relative bg-black/40 rounded-2xl border border-white/5 p-6 overflow-hidden checkered-bg">
             {!selectedImage ? (
               <div className="text-center">
                 <div className="w-20 h-20 bg-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-pink-500/20">
                   <UploadCloud className="w-10 h-10 text-pink-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-1">مساحة العمل</h3>
+                <h3 className="text-lg font-bold text-white mb-1">{t.workspace}</h3>
                 <p className="text-sm text-gray-400 mb-6">{t.dragDrop}</p>
                 <label className="btn-glowing px-6 py-3 rounded-xl font-bold text-white cursor-pointer inline-block text-sm">
-                  اختر صورة
-                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={usageCount >= 3 && !isPro} />                </label>
+                  {t.chooseImage}
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={usageCount >= 2 && !isPro} />                </label>
               </div>
             ) : (
               <div 
@@ -541,7 +567,7 @@ export default function RemoveBgPage() {
                  style={{ width: `${Math.min((usageCount / 2) * 100, 100)}%` }}
                ></div>
              </div>
-             <p className="text-xs text-right text-gray-500 font-medium">{usageCount} / 2</p>
+             <p className="text-xs text-right text-gray-500 font-medium">{usageCount} / {isPro ? '∞' : '2'}</p>
           </div>
 
           <div className="glass-dark p-6 rounded-3xl border border-white/10 shadow-2xl flex-1 max-h-[500px] overflow-hidden flex flex-col relative">

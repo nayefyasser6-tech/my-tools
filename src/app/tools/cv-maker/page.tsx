@@ -7,6 +7,8 @@ import { Download, Sparkles, Loader2, Plus, FileText, Edit2, Clock, Link, AlertC
 import { createClient } from '@/utils/supabase/client';
 
 export default function CvMakerPage() {
+  const [isPro, setIsPro] = useState<boolean>(false);
+const [usageCount, setUsageCount] = useState<number>(0);
   const { language } = useLanguage();
   const router = useRouter();
   const supabase = createClient();
@@ -143,7 +145,11 @@ export default function CvMakerPage() {
     }
   };
   // @ts-ignore
+  // @ts-ignore
   const t = translations[language] || translations.ar;
+
+  const [isPro, setIsPro] = useState<boolean>(false);
+  const [usageCount, setUsageCount] = useState<number>(0);
 
   const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -155,9 +161,9 @@ export default function CvMakerPage() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [wizardError, setWizardError] = useState('');
-  const [errorModal, setErrorModal] = useState(''); // نص الخطأ الذي يظهر في النافذة بدل alert
+  const [errorModal, setErrorModal] = useState('');
 
-  const [elapsed, setElapsed] = useState(0); // عداد الثواني أثناء التوليد
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     if (!aiLoading) {
@@ -176,7 +182,6 @@ export default function CvMakerPage() {
   const [cvData, setCvData] = useState<any>(defaultCvState);
   const [wizardData, setWizardData] = useState({ name: '', title: '', notes: '', email: '', phone: '', location: '' });
 
-  // حفظ آمن في المتصفح: إذا امتلأ التخزين لا يفشل التوليد بسببه
   const saveLocal = (key: string, value: any) => {
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -188,27 +193,44 @@ export default function CvMakerPage() {
   const loadUserData = async (user: any) => {
     if (!user) {
       setCvHistory([]);
+      setUsageCount(0);
+      setIsPro(false);
       return;
     }
 
-    // جلب السجل المحلي المعزول للمستخدم
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan_type')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.plan_type === 'pro') {
+        setIsPro(true);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+
     const storageKey = `cvs_${user.id}`;
     try {
       const localData = localStorage.getItem(storageKey);
       if (localData) {
-        setCvHistory(JSON.parse(localData));
+        const parsed = JSON.parse(localData);
+        setCvHistory(parsed);
+        setUsageCount(parsed.length);
       }
     } catch (e) {
       console.warn('Local history could not be read');
     }
 
-    // المزامنة مع قاعدة البيانات في الخلفية
     try {
       const res = await fetch(`/api/cv-history?userId=${user.id}`);
       if (res.ok) {
         const dbData = await res.json();
         if (dbData.history) {
           setCvHistory(dbData.history);
+          setUsageCount(dbData.history.length);
           saveLocal(storageKey, dbData.history);
         }
       }
@@ -218,13 +240,11 @@ export default function CvMakerPage() {
   };
 
   useEffect(() => {
-    // التقاط الجلسة الحالية
     supabase.auth.getSession().then(({ data: { session } }: any) => {
       setActiveUser(session?.user || null);
       if (session?.user) loadUserData(session.user);
     });
 
-    // مراقبة فورية لأي تغيير
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setActiveUser(session?.user || null);
       loadUserData(session?.user || null);
@@ -234,14 +254,12 @@ export default function CvMakerPage() {
   }, []);
 
   const handleNewCvClick = () => {
-    // الاعتماد على حالة المتصفح اللحظية (Zero-Delay)
     if (!activeUser) {
       setShowAuthModal(true);
       return;
     }
 
-    // التحقق من الحد المسموح (سيرة واحدة) مجاناً
-    if (cvHistory.length >= 1) {
+    if (usageCount >= 1 && !isPro) {
       setShowLimitModal(true);
     } else {
       setShowWizard(true);
@@ -262,12 +280,11 @@ export default function CvMakerPage() {
     if (!window.confirm(t.deleteConfirm)) return;
     if (!activeUser) return;
 
-    // حذف فوري من الواجهة والسجل المعزول
     const newHistory = cvHistory.filter(cv => cv.id !== id);
     setCvHistory(newHistory);
+    setUsageCount(newHistory.length);
     saveLocal(`cvs_${activeUser.id}`, newHistory);
 
-    // الإرسال لقاعدة البيانات
     try {
       await fetch(`/api/cv-history?id=${id}&userId=${activeUser.id}`, { method: 'DELETE' });
     } catch (error) {
@@ -276,7 +293,7 @@ export default function CvMakerPage() {
   };
 
   const handleGenerate = async () => {
-    if (aiLoading) return; // منع الضغط المزدوج
+    if (aiLoading) return;
 
     if (!wizardData.title) {
       setWizardError(t.jobTitleReq);
@@ -290,7 +307,7 @@ export default function CvMakerPage() {
     }
 
     setShowWizard(false);
-    setAiLoading(true); // تظهر نافذة التحميل فوراً
+    setAiLoading(true);
     setWizardError('');
 
     try {
@@ -301,7 +318,6 @@ export default function CvMakerPage() {
       });
       const resData = await res.json().catch(() => ({}));
 
-      // حالات الخطأ المعروفة تظهر في نوافذ جميلة بدل alert
       if (res.status === 401) {
         setShowAuthModal(true);
         return;
@@ -340,14 +356,13 @@ export default function CvMakerPage() {
           userId: activeUser.id
         };
 
-        // الحفظ في المتصفح تحت معرف المستخدم فوراً
         const updatedHistory = [newRecord, ...cvHistory];
         setCvHistory(updatedHistory);
+        setUsageCount(updatedHistory.length);
         saveLocal(`cvs_${activeUser.id}`, updatedHistory);
         setView('editor');
         setWizardData({ name: '', title: '', notes: '', email: '', phone: '', location: '' });
 
-        // الإرسال لقاعدة البيانات (مع تسجيل الخطأ إن فشل الحفظ)
         fetch('/api/cv-history', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -364,7 +379,7 @@ export default function CvMakerPage() {
     } catch (e) {
       setErrorModal(t.genFail);
     } finally {
-      setAiLoading(false); // تختفي نافذة التحميل دائماً، نجح الطلب أو فشل
+      setAiLoading(false);
     }
   };
 
@@ -375,13 +390,6 @@ export default function CvMakerPage() {
     setPhotoUrl(record.photo);
     setView('editor');
   };
-
-  // نصوص ونسبة التقدم لنافذة التحميل
-  const loadingSteps: string[] = t.loadSteps;
-  const stepIndex = Math.min(loadingSteps.length - 1, Math.floor(elapsed / 5));
-  const progress = Math.min(95, Math.round(100 * (1 - Math.exp(-elapsed / 10))));
-  const timeText = (elapsed > 25 ? t.timeAlmost : t.timeUsual).replace('{s}', String(elapsed));
-
   return (
     <div className="min-h-screen pt-28 pb-20 px-4 md:px-8 bg-gradient-to-br from-[#2e1065] via-[#4a044e] to-[#2e1065]" dir={language === 'en' ? 'ltr' : 'rtl'}>
 
